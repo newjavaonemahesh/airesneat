@@ -80,8 +80,7 @@ class FlightServiceTest {
                 .arrivalAirport("LAX")
                 .build();
 
-        when(flightRepository.searchFlights(anyString(), anyString(), any(), any()))
-                .thenReturn(Arrays.asList(testFlight));
+        when(flightRepository.findAll()).thenReturn(Arrays.asList(testFlight));
         when(seatRepository.countByFlightIdAndStatus(anyLong(), eq(SeatStatus.AVAILABLE))).thenReturn(1);
 
         List<FlightDTO> result = flightService.searchFlights(request);

@@ -13,12 +13,12 @@ import java.util.Optional;
 @Repository
 public interface SeatHoldRepository extends JpaRepository<SeatHold, Long> {
 
+    Optional<SeatHold> findBySeatIdAndActiveTrue(Long seatId);
+
     Optional<SeatHold> findBySeatIdAndUserIdAndActiveTrue(Long seatId, String userId);
 
-    Optional<SeatHold> findBySeatIdAndActiveTrue(Long seatId);
+    List<SeatHold> findByUserIdAndActiveTrue(String userId);
 
     @Query("SELECT sh FROM SeatHold sh WHERE sh.active = true AND sh.expirationTime < :now")
     List<SeatHold> findExpiredHolds(@Param("now") LocalDateTime now);
-
-    List<SeatHold> findByUserIdAndActiveTrue(String userId);
 }

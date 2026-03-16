@@ -25,13 +25,16 @@ public class FlightService {
     private final SeatRepository seatRepository;
 
     public List<FlightDTO> searchFlights(FlightSearchRequest request) {
-        List<Flight> flights = flightRepository.searchFlights(
-                request.getDepartureAirport(),
-                request.getArrivalAirport(),
-                request.getDepartureFrom(),
-                request.getDepartureTo()
-        );
-        return flights.stream()
+        // Filter flights based on search criteria
+        return flightRepository.findAll().stream()
+                .filter(f -> request.getDepartureAirport() == null || 
+                             f.getDepartureAirport().equals(request.getDepartureAirport()))
+                .filter(f -> request.getArrivalAirport() == null || 
+                             f.getArrivalAirport().equals(request.getArrivalAirport()))
+                .filter(f -> request.getDepartureFrom() == null || 
+                             !f.getDepartureTime().isBefore(request.getDepartureFrom()))
+                .filter(f -> request.getDepartureTo() == null || 
+                             !f.getDepartureTime().isAfter(request.getDepartureTo()))
                 .map(this::toFlightDTO)
                 .collect(Collectors.toList());
     }

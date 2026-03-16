@@ -1,7 +1,6 @@
 package com.airline.service;
 
 import com.airline.dto.BookingDTO;
-import com.airline.dto.BookingRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.model.*;
@@ -36,7 +35,7 @@ class BookingServiceTest {
     private SeatRepository seatRepository;
 
     @Mock
-    private SeatHoldService seatHoldService;
+    private SeatLockService seatLockService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -46,7 +45,6 @@ class BookingServiceTest {
     private Booking testBooking;
     private SeatHold testHold;
     private Flight testFlight;
-    private BookingRequest validRequest;
 
     @BeforeEach
     void setUp() {
@@ -85,48 +83,50 @@ class BookingServiceTest {
                 .expirationTime(LocalDateTime.now().plusMinutes(10))
                 .active(true)
                 .build();
-
-        validRequest = BookingRequest.builder()
-                .userId("user123")
-                .passengerName("John Doe")
-                .email("john@example.com")
-                .build();
     }
 
     @Test
-    void confirmBooking_WhenValidHold_ShouldCreateBooking() {
-        when(seatHoldService.validateAndGetHold(1L, "user123")).thenReturn(testHold);
-        when(passengerRepository.findByEmail("john@example.com")).thenReturn(Optional.empty());
-        when(passengerRepository.save(any(Passenger.class))).thenReturn(testPassenger);
+    void createBooking_WhenValidHold_ShouldCreateBooking() {
+        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+        when(passengerRepository.findById(1L)).thenReturn(Optional.of(testPassenger));
         when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        BookingDTO result = bookingService.confirmBooking(1L, validRequest);
+        BookingDTO result = bookingService.createBooking(1L, 1L);
 
         assertThat(result.getPassengerName()).isEqualTo("John Doe");
         assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        verify(seatHoldService).deactivateHold(testHold);
+        assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.BOOKED);
+        verify(seatLockService).deactivateHold(testHold);
     }
 
     @Test
-    void confirmBooking_WhenExistingPassenger_ShouldUseExistingPassenger() {
-        when(seatHoldService.validateAndGetHold(1L, "user123")).thenReturn(testHold);
-        when(passengerRepository.findByEmail("john@example.com")).thenReturn(Optional.of(testPassenger));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-        when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
+    void createBooking_WhenSeatNotHeld_ShouldThrowException() {
+        testSeat.setStatus(SeatStatus.AVAILABLE);
+        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
 
-        bookingService.confirmBooking(1L, validRequest);
-
-        verify(passengerRepository, never()).save(any(Passenger.class));
+        assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
+                .isInstanceOf(InvalidHoldException.class)
+                .hasMessageContaining("no longer held");
     }
 
     @Test
-    void confirmBooking_WhenInvalidHold_ShouldThrowException() {
-        when(seatHoldService.validateAndGetHold(1L, "user123"))
-                .thenThrow(new InvalidHoldException("No active hold found"));
+    void createBooking_WhenHoldInvalid_ShouldThrowException() {
+        when(seatLockService.getActiveHold(1L))
+                .thenThrow(new InvalidHoldException("Hold is not active"));
 
-        assertThatThrownBy(() -> bookingService.confirmBooking(1L, validRequest))
+        assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
                 .isInstanceOf(InvalidHoldException.class);
+    }
+
+    @Test
+    void createBooking_WhenPassengerNotFound_ShouldThrowException() {
+        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+        when(passengerRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.createBooking(1L, 999L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Passenger not found");
     }
 
     @Test

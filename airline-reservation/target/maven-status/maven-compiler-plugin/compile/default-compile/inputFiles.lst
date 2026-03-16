@@ -1,6 +1,5 @@
 /app/airline-reservation/src/main/java/com/airline/service/BookingService.java
 /app/airline-reservation/src/main/java/com/airline/model/Flight.java
-/app/airline-reservation/src/main/java/com/airline/service/SeatHoldService.java
 /app/airline-reservation/src/main/java/com/airline/repository/PassengerRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/SeatRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/SeatHoldRepository.java
@@ -21,6 +20,7 @@
 /app/airline-reservation/src/main/java/com/airline/controller/SeatController.java
 /app/airline-reservation/src/main/java/com/airline/model/Passenger.java
 /app/airline-reservation/src/main/java/com/airline/model/Booking.java
+/app/airline-reservation/src/main/java/com/airline/service/SeatLockService.java
 /app/airline-reservation/src/main/java/com/airline/dto/SeatHoldDTO.java
 /app/airline-reservation/src/main/java/com/airline/exception/GlobalExceptionHandler.java
 /app/airline-reservation/src/main/java/com/airline/AirlineReservationApplication.java

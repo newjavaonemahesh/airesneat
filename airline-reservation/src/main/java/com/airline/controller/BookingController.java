@@ -1,11 +1,9 @@
 package com.airline.controller;
 
 import com.airline.dto.BookingDTO;
-import com.airline.dto.BookingRequest;
 import com.airline.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,21 +12,22 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
-@Tag(name = "Bookings", description = "Booking confirmation and cancellation operations")
+@Tag(name = "Bookings", description = "Booking operations")
 public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping("/seats/{seatId}")
-    @Operation(summary = "Confirm booking", description = "Confirms a booking for a held seat")
-    public ResponseEntity<BookingDTO> confirmBooking(
-            @PathVariable Long seatId,
-            @Valid @RequestBody BookingRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.confirmBooking(seatId, request));
+    @PostMapping
+    @Operation(summary = "Create booking", description = "Creates a booking from a valid hold")
+    public ResponseEntity<BookingDTO> createBooking(
+            @RequestParam Long holdId,
+            @RequestParam Long passengerId) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(bookingService.createBooking(holdId, passengerId));
     }
 
     @GetMapping("/{bookingId}")
-    @Operation(summary = "Get booking details", description = "Returns booking details by booking ID")
+    @Operation(summary = "Get booking", description = "Returns booking details")
     public ResponseEntity<BookingDTO> getBooking(@PathVariable Long bookingId) {
         return ResponseEntity.ok(bookingService.getBookingById(bookingId));
     }

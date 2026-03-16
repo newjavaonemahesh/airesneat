@@ -1,7 +1,6 @@
 package com.airline.service;
 
 import com.airline.dto.FlightDTO;
-import com.airline.dto.FlightSearchRequest;
 import com.airline.dto.SeatDTO;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.model.*;
@@ -63,54 +62,19 @@ class FlightServiceTest {
     }
 
     @Test
-    void getAllFlights_ShouldReturnAllFlights() {
+    void getFlights_ShouldReturnAllFlights() {
         when(flightRepository.findAll()).thenReturn(Arrays.asList(testFlight));
         when(seatRepository.countByFlightIdAndStatus(anyLong(), eq(SeatStatus.AVAILABLE))).thenReturn(1);
 
-        List<FlightDTO> result = flightService.getAllFlights();
+        List<FlightDTO> result = flightService.getFlights();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getFlightNumber()).isEqualTo("AA100");
     }
 
     @Test
-    void searchFlights_ShouldReturnMatchingFlights() {
-        FlightSearchRequest request = FlightSearchRequest.builder()
-                .departureAirport("JFK")
-                .arrivalAirport("LAX")
-                .build();
-
-        when(flightRepository.findAll()).thenReturn(Arrays.asList(testFlight));
-        when(seatRepository.countByFlightIdAndStatus(anyLong(), eq(SeatStatus.AVAILABLE))).thenReturn(1);
-
-        List<FlightDTO> result = flightService.searchFlights(request);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDepartureAirport()).isEqualTo("JFK");
-    }
-
-    @Test
-    void getFlightById_WhenExists_ShouldReturnFlight() {
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(testFlight));
-        when(seatRepository.countByFlightIdAndStatus(anyLong(), eq(SeatStatus.AVAILABLE))).thenReturn(1);
-
-        FlightDTO result = flightService.getFlightById(1L);
-
-        assertThat(result.getFlightNumber()).isEqualTo("AA100");
-    }
-
-    @Test
-    void getFlightById_WhenNotExists_ShouldThrowException() {
-        when(flightRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> flightService.getFlightById(999L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Flight not found");
-    }
-
-    @Test
     void getSeatsForFlight_ShouldReturnAllSeats() {
-        when(flightRepository.existsById(1L)).thenReturn(true);
+        when(flightRepository.findById(1L)).thenReturn(Optional.of(testFlight));
         when(seatRepository.findByFlightId(1L)).thenReturn(Arrays.asList(testSeat));
 
         List<SeatDTO> result = flightService.getSeatsForFlight(1L);
@@ -122,21 +86,10 @@ class FlightServiceTest {
 
     @Test
     void getSeatsForFlight_WhenFlightNotExists_ShouldThrowException() {
-        when(flightRepository.existsById(999L)).thenReturn(false);
+        when(flightRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> flightService.getSeatsForFlight(999L))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void getAvailableSeatsForFlight_ShouldReturnOnlyAvailableSeats() {
-        when(flightRepository.existsById(1L)).thenReturn(true);
-        when(seatRepository.findByFlightIdAndStatus(1L, SeatStatus.AVAILABLE))
-                .thenReturn(Arrays.asList(testSeat));
-
-        List<SeatDTO> result = flightService.getAvailableSeatsForFlight(1L);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Flight not found");
     }
 }

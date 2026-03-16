@@ -4,5 +4,5 @@ com/airline/repository/SeatRepositoryTest.class
 com/airline/controller/BookingControllerTest.class
 com/airline/AirlineReservationApplicationTests.class
 com/airline/controller/FlightControllerTest.class
-com/airline/service/SeatHoldServiceTest.class
+com/airline/service/SeatLockServiceTest.class
 com/airline/service/BookingServiceTest.class

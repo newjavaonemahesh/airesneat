@@ -1,7 +1,6 @@
 package com.airline.controller;
 
 import com.airline.dto.FlightDTO;
-import com.airline.dto.FlightSearchRequest;
 import com.airline.dto.SeatDTO;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.model.FareClass;
@@ -16,9 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -59,43 +56,13 @@ class FlightControllerTest {
     }
 
     @Test
-    void getAllFlights_ShouldReturnFlightList() throws Exception {
-        when(flightService.getAllFlights()).thenReturn(Arrays.asList(testFlight));
+    void getFlights_ShouldReturnFlightList() throws Exception {
+        when(flightService.getFlights()).thenReturn(Arrays.asList(testFlight));
 
         mockMvc.perform(get("/api/flights"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].flightNumber").value("AA100"))
                 .andExpect(jsonPath("$[0].departureAirport").value("JFK"));
-    }
-
-    @Test
-    void searchFlights_ShouldReturnMatchingFlights() throws Exception {
-        when(flightService.searchFlights(any(FlightSearchRequest.class)))
-                .thenReturn(Arrays.asList(testFlight));
-
-        mockMvc.perform(get("/api/flights/search")
-                        .param("departureAirport", "JFK")
-                        .param("arrivalAirport", "LAX"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].flightNumber").value("AA100"));
-    }
-
-    @Test
-    void getFlightById_ShouldReturnFlight() throws Exception {
-        when(flightService.getFlightById(1L)).thenReturn(testFlight);
-
-        mockMvc.perform(get("/api/flights/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.flightNumber").value("AA100"));
-    }
-
-    @Test
-    void getFlightById_WhenNotFound_ShouldReturn404() throws Exception {
-        when(flightService.getFlightById(999L))
-                .thenThrow(new ResourceNotFoundException("Flight not found"));
-
-        mockMvc.perform(get("/api/flights/999"))
-                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -109,11 +76,11 @@ class FlightControllerTest {
     }
 
     @Test
-    void getAvailableSeatsForFlight_ShouldReturnOnlyAvailableSeats() throws Exception {
-        when(flightService.getAvailableSeatsForFlight(1L)).thenReturn(Arrays.asList(testSeat));
+    void getSeatsForFlight_WhenFlightNotFound_ShouldReturn404() throws Exception {
+        when(flightService.getSeatsForFlight(999L))
+                .thenThrow(new ResourceNotFoundException("Flight not found"));
 
-        mockMvc.perform(get("/api/flights/1/seats/available"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
+        mockMvc.perform(get("/api/flights/999/seats"))
+                .andExpect(status().isNotFound());
     }
 }

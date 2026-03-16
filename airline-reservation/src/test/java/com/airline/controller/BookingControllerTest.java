@@ -1,24 +1,19 @@
 package com.airline.controller;
 
 import com.airline.dto.BookingDTO;
-import com.airline.dto.BookingRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.model.BookingStatus;
 import com.airline.service.BookingService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -30,14 +25,10 @@ class BookingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private BookingService bookingService;
 
     private BookingDTO testBooking;
-    private BookingRequest validRequest;
 
     @BeforeEach
     void setUp() {
@@ -50,49 +41,40 @@ class BookingControllerTest {
                 .bookingTime(LocalDateTime.now())
                 .status(BookingStatus.CONFIRMED)
                 .build();
-
-        validRequest = BookingRequest.builder()
-                .userId("user123")
-                .passengerName("John Doe")
-                .email("john@example.com")
-                .build();
     }
 
     @Test
-    void confirmBooking_ShouldReturnCreatedBooking() throws Exception {
-        when(bookingService.confirmBooking(eq(1L), any(BookingRequest.class))).thenReturn(testBooking);
+    void createBooking_ShouldReturnCreatedBooking() throws Exception {
+        when(bookingService.createBooking(1L, 1L)).thenReturn(testBooking);
 
-        mockMvc.perform(post("/api/bookings/seats/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validRequest)))
+        mockMvc.perform(post("/api/bookings")
+                        .param("holdId", "1")
+                        .param("passengerId", "1"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.passengerName").value("John Doe"))
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
 
     @Test
-    void confirmBooking_WithInvalidHold_ShouldReturn400() throws Exception {
-        when(bookingService.confirmBooking(eq(1L), any(BookingRequest.class)))
-                .thenThrow(new InvalidHoldException("No active hold found"));
+    void createBooking_WhenHoldInvalid_ShouldReturn400() throws Exception {
+        when(bookingService.createBooking(1L, 1L))
+                .thenThrow(new InvalidHoldException("Hold is not active"));
 
-        mockMvc.perform(post("/api/bookings/seats/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validRequest)))
+        mockMvc.perform(post("/api/bookings")
+                        .param("holdId", "1")
+                        .param("passengerId", "1"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void confirmBooking_WithInvalidRequest_ShouldReturn400() throws Exception {
-        BookingRequest invalidRequest = BookingRequest.builder()
-                .userId("")  // Empty userId
-                .passengerName("John")
-                .email("invalid-email")  // Invalid email
-                .build();
+    void createBooking_WhenPassengerNotFound_ShouldReturn404() throws Exception {
+        when(bookingService.createBooking(1L, 999L))
+                .thenThrow(new ResourceNotFoundException("Passenger not found"));
 
-        mockMvc.perform(post("/api/bookings/seats/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/bookings")
+                        .param("holdId", "1")
+                        .param("passengerId", "999"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

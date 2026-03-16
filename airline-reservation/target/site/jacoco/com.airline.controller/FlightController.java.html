@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(&quot;/api/flights&quot;)
+@RequestMapping(&quot;/flights&quot;)
 <span class="fc" id="L16">@RequiredArgsConstructor</span>
-@Tag(name = &quot;Flights&quot;, description = &quot;Flight and seat viewing operations&quot;)
+@Tag(name = &quot;Flights&quot;, description = &quot;Flight and seat retrieval operations&quot;)
 public class FlightController {
 
     private final FlightService flightService;

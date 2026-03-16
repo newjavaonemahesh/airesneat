@@ -2,6 +2,7 @@ package com.airline.config;
 
 import com.airline.model.*;
 import com.airline.repository.FlightRepository;
+import com.airline.repository.PassengerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -16,8 +17,20 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
-    public CommandLineRunner initData(FlightRepository flightRepository) {
+    public CommandLineRunner initData(FlightRepository flightRepository,
+                                       PassengerRepository passengerRepository) {
         return args -> {
+            // Create sample passengers
+            passengerRepository.save(Passenger.builder()
+                    .name("John Doe")
+                    .email("john@example.com")
+                    .build());
+            
+            passengerRepository.save(Passenger.builder()
+                    .name("Jane Smith")
+                    .email("jane@example.com")
+                    .build());
+
             LocalDateTime now = LocalDateTime.now();
 
             Flight flight1 = createFlightWithSeats("AA100", "JFK", "LAX",

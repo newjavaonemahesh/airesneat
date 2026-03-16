@@ -59,7 +59,7 @@ class FlightControllerTest {
     void getFlights_ShouldReturnFlightList() throws Exception {
         when(flightService.getFlights()).thenReturn(Arrays.asList(testFlight));
 
-        mockMvc.perform(get("/api/flights"))
+        mockMvc.perform(get("/flights"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].flightNumber").value("AA100"))
                 .andExpect(jsonPath("$[0].departureAirport").value("JFK"));
@@ -69,10 +69,12 @@ class FlightControllerTest {
     void getSeatsForFlight_ShouldReturnSeats() throws Exception {
         when(flightService.getSeatsForFlight(1L)).thenReturn(Arrays.asList(testSeat));
 
-        mockMvc.perform(get("/api/flights/1/seats"))
+        mockMvc.perform(get("/flights/1/seats"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].seatNumber").value("1A"))
-                .andExpect(jsonPath("$[0].rowNumber").value(1));
+                .andExpect(jsonPath("$[0].rowNumber").value(1))
+                .andExpect(jsonPath("$[0].fareClass").value("FIRST"))
+                .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
     }
 
     @Test
@@ -80,7 +82,7 @@ class FlightControllerTest {
         when(flightService.getSeatsForFlight(999L))
                 .thenThrow(new ResourceNotFoundException("Flight not found"));
 
-        mockMvc.perform(get("/api/flights/999/seats"))
+        mockMvc.perform(get("/flights/999/seats"))
                 .andExpect(status().isNotFound());
     }
 }

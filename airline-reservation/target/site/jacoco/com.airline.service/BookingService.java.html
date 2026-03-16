@@ -52,30 +52,36 @@ public class BookingService {
             );
         }
 
+        // Check if there's already an active (CONFIRMED) booking for this seat
+<span class="fc" id="L56">        bookingRepository.findBySeatIdAndStatus(seat.getId(), BookingStatus.CONFIRMED)</span>
+<span class="fc" id="L57">                .ifPresent(existing -&gt; {</span>
+<span class="nc" id="L58">                    throw new InvalidHoldException(&quot;Seat already has an active booking&quot;);</span>
+                });
+
         // Get passenger
-<span class="fc" id="L56">        Passenger passenger = passengerRepository.findById(passengerId)</span>
-<span class="fc" id="L57">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Passenger not found with id: &quot; + passengerId));</span>
+<span class="fc" id="L62">        Passenger passenger = passengerRepository.findById(passengerId)</span>
+<span class="fc" id="L63">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Passenger not found with id: &quot; + passengerId));</span>
 
         // Create booking
-<span class="fc" id="L60">        Booking booking = Booking.builder()</span>
-<span class="fc" id="L61">                .seat(seat)</span>
-<span class="fc" id="L62">                .passenger(passenger)</span>
-<span class="fc" id="L63">                .bookingTime(LocalDateTime.now())</span>
-<span class="fc" id="L64">                .status(BookingStatus.CONFIRMED)</span>
-<span class="fc" id="L65">                .build();</span>
+<span class="fc" id="L66">        Booking booking = Booking.builder()</span>
+<span class="fc" id="L67">                .seat(seat)</span>
+<span class="fc" id="L68">                .passenger(passenger)</span>
+<span class="fc" id="L69">                .bookingTime(LocalDateTime.now())</span>
+<span class="fc" id="L70">                .status(BookingStatus.CONFIRMED)</span>
+<span class="fc" id="L71">                .build();</span>
 
-<span class="fc" id="L67">        bookingRepository.save(booking);</span>
+<span class="fc" id="L73">        bookingRepository.save(booking);</span>
 
         // Update seat status: HELD → BOOKED
-<span class="fc" id="L70">        seat.setStatus(SeatStatus.BOOKED);</span>
-<span class="fc" id="L71">        seatRepository.save(seat);</span>
+<span class="fc" id="L76">        seat.setStatus(SeatStatus.BOOKED);</span>
+<span class="fc" id="L77">        seatRepository.save(seat);</span>
 
         // Deactivate the hold
-<span class="fc" id="L74">        seatLockService.deactivateHold(seatHold);</span>
+<span class="fc" id="L80">        seatLockService.deactivateHold(seatHold);</span>
 
-<span class="fc" id="L76">        log.info(&quot;Booking created: seat {} for passenger {}&quot;, seat.getSeatNumber(), passenger.getName());</span>
+<span class="fc" id="L82">        log.info(&quot;Booking created: seat {} for passenger {}&quot;, seat.getSeatNumber(), passenger.getName());</span>
 
-<span class="fc" id="L78">        return toBookingDTO(booking);</span>
+<span class="fc" id="L84">        return toBookingDTO(booking);</span>
     }
 
     /**
@@ -83,9 +89,9 @@ public class BookingService {
      */
     @Transactional(readOnly = true)
     public BookingDTO getBookingById(Long bookingId) {
-<span class="fc" id="L86">        Booking booking = bookingRepository.findById(bookingId)</span>
-<span class="fc" id="L87">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
-<span class="fc" id="L88">        return toBookingDTO(booking);</span>
+<span class="fc" id="L92">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="fc" id="L93">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
+<span class="fc" id="L94">        return toBookingDTO(booking);</span>
     }
 
     /**
@@ -94,40 +100,40 @@ public class BookingService {
      */
     @Transactional
     public BookingDTO cancelBooking(Long bookingId) {
-<span class="fc" id="L97">        Booking booking = bookingRepository.findById(bookingId)</span>
-<span class="fc" id="L98">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
+<span class="fc" id="L103">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="fc" id="L104">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
 
-<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (booking.getStatus() == BookingStatus.CANCELLED) {</span>
-<span class="fc" id="L101">            throw new InvalidHoldException(&quot;Booking is already cancelled&quot;);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (booking.getStatus() == BookingStatus.CANCELLED) {</span>
+<span class="fc" id="L107">            throw new InvalidHoldException(&quot;Booking is already cancelled&quot;);</span>
         }
 
         // Update booking status
-<span class="fc" id="L105">        booking.setStatus(BookingStatus.CANCELLED);</span>
-<span class="fc" id="L106">        bookingRepository.save(booking);</span>
+<span class="fc" id="L111">        booking.setStatus(BookingStatus.CANCELLED);</span>
+<span class="fc" id="L112">        bookingRepository.save(booking);</span>
 
         // Release seat: BOOKED → AVAILABLE
-<span class="fc" id="L109">        Seat seat = booking.getSeat();</span>
-<span class="fc" id="L110">        seat.setStatus(SeatStatus.AVAILABLE);</span>
-<span class="fc" id="L111">        seatRepository.save(seat);</span>
+<span class="fc" id="L115">        Seat seat = booking.getSeat();</span>
+<span class="fc" id="L116">        seat.setStatus(SeatStatus.AVAILABLE);</span>
+<span class="fc" id="L117">        seatRepository.save(seat);</span>
 
-<span class="fc" id="L113">        log.info(&quot;Booking {} cancelled, seat {} released&quot;, bookingId, seat.getSeatNumber());</span>
+<span class="fc" id="L119">        log.info(&quot;Booking {} cancelled, seat {} released&quot;, bookingId, seat.getSeatNumber());</span>
 
-<span class="fc" id="L115">        return toBookingDTO(booking);</span>
+<span class="fc" id="L121">        return toBookingDTO(booking);</span>
     }
 
     private BookingDTO toBookingDTO(Booking booking) {
-<span class="fc" id="L119">        Seat seat = booking.getSeat();</span>
-<span class="fc" id="L120">        Passenger passenger = booking.getPassenger();</span>
+<span class="fc" id="L125">        Seat seat = booking.getSeat();</span>
+<span class="fc" id="L126">        Passenger passenger = booking.getPassenger();</span>
         
-<span class="fc" id="L122">        return BookingDTO.builder()</span>
-<span class="fc" id="L123">                .id(booking.getId())</span>
-<span class="fc" id="L124">                .passengerName(passenger.getName())</span>
-<span class="fc" id="L125">                .passengerEmail(passenger.getEmail())</span>
-<span class="fc" id="L126">                .seatNumber(seat.getSeatNumber())</span>
-<span class="fc" id="L127">                .flightNumber(seat.getFlight().getFlightNumber())</span>
-<span class="fc" id="L128">                .bookingTime(booking.getBookingTime())</span>
-<span class="fc" id="L129">                .status(booking.getStatus())</span>
-<span class="fc" id="L130">                .build();</span>
+<span class="fc" id="L128">        return BookingDTO.builder()</span>
+<span class="fc" id="L129">                .id(booking.getId())</span>
+<span class="fc" id="L130">                .passengerName(passenger.getName())</span>
+<span class="fc" id="L131">                .passengerEmail(passenger.getEmail())</span>
+<span class="fc" id="L132">                .seatNumber(seat.getSeatNumber())</span>
+<span class="fc" id="L133">                .flightNumber(seat.getFlight().getFlightNumber())</span>
+<span class="fc" id="L134">                .bookingTime(booking.getBookingTime())</span>
+<span class="fc" id="L135">                .status(booking.getStatus())</span>
+<span class="fc" id="L136">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

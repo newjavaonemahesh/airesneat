@@ -37,5 +37,5 @@ Airline Seat Reservation System,com.airline.exception,GlobalExceptionHandler,7,1
 Airline Seat Reservation System,com.airline.exception,SeatNotAvailableException,0,4,0,0,0,2,0,1,0,1
 Airline Seat Reservation System,com.airline.exception,ResourceNotFoundException,0,4,0,0,0,2,0,1,0,1
 Airline Seat Reservation System,com.airline.service,FlightService,0,101,0,0,0,28,0,6,0,6
-Airline Seat Reservation System,com.airline.service,BookingService,0,196,0,4,0,46,0,11,0,9
+Airline Seat Reservation System,com.airline.service,BookingService,5,204,0,4,1,48,1,11,1,9
 Airline Seat Reservation System,com.airline.service,SeatLockService,26,231,2,12,4,58,5,13,3,8

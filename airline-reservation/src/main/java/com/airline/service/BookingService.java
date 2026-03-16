@@ -52,6 +52,12 @@ public class BookingService {
             );
         }
 
+        // Check if there's already an active (CONFIRMED) booking for this seat
+        bookingRepository.findBySeatIdAndStatus(seat.getId(), BookingStatus.CONFIRMED)
+                .ifPresent(existing -> {
+                    throw new InvalidHoldException("Seat already has an active booking");
+                });
+
         // Get passenger
         Passenger passenger = passengerRepository.findById(passengerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Passenger not found with id: " + passengerId));

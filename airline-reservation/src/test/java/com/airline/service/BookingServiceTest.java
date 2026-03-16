@@ -57,7 +57,7 @@ class BookingServiceTest {
                 .id(1L)
                 .seatNumber("1A")
                 .rowNumber(1)
-                .fareClass(FareClass.FIRST)
+                .fareClass(FareClass.BUSINESS)
                 .status(SeatStatus.HELD)
                 .flight(testFlight)
                 .build();

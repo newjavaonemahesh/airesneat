@@ -53,7 +53,7 @@ class SeatLockServiceTest {
                 .id(1L)
                 .seatNumber("1A")
                 .rowNumber(1)
-                .fareClass(FareClass.FIRST)
+                .fareClass(FareClass.BUSINESS)
                 .status(SeatStatus.AVAILABLE)
                 .flight(testFlight)
                 .build();

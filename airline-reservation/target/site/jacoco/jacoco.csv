@@ -7,7 +7,7 @@ Airline Seat Reservation System,com.airline.model,Flight.FlightBuilder,27,58,1,1
 Airline Seat Reservation System,com.airline.model,Booking,16,49,0,0,0,9,4,10,4,10
 Airline Seat Reservation System,com.airline.model,Seat.SeatBuilder,19,57,1,1,0,1,2,8,1,8
 Airline Seat Reservation System,com.airline.model,Booking.BookingBuilder,18,50,1,1,0,1,2,7,1,7
-Airline Seat Reservation System,com.airline.model,FareClass,0,27,0,0,0,5,0,1,0,1
+Airline Seat Reservation System,com.airline.model,FareClass,0,15,0,0,0,3,0,1,0,1
 Airline Seat Reservation System,com.airline.model,SeatHold,19,56,0,0,1,9,5,11,5,11
 Airline Seat Reservation System,com.airline.model,Passenger,15,25,0,0,2,5,4,5,4,5
 Airline Seat Reservation System,com.airline.model,BookingStatus,0,15,0,0,0,3,0,1,0,1
@@ -30,7 +30,7 @@ Airline Seat Reservation System,com.airline.dto,BookingDTO,31,49,0,0,2,9,8,9,8,9
 Airline Seat Reservation System,com.airline.dto,SeatHoldRequest.SeatHoldRequestBuilder,6,21,0,0,0,1,1,4,1,4
 Airline Seat Reservation System,com.airline.dto,SeatHoldDTO,31,49,0,0,2,9,8,9,8,9
 Airline Seat Reservation System,com.airline.config,OpenApiConfig,0,25,0,0,0,9,0,2,0,2
-Airline Seat Reservation System,com.airline.config,DataInitializer,0,302,0,14,0,51,0,12,0,5
+Airline Seat Reservation System,com.airline.config,DataInitializer,0,250,0,8,0,53,0,9,0,5
 Airline Seat Reservation System,com.airline,AirlineReservationApplication,5,3,0,0,2,1,1,1,1,1
 Airline Seat Reservation System,com.airline.exception,InvalidHoldException,0,4,0,0,0,2,0,1,0,1
 Airline Seat Reservation System,com.airline.exception,GlobalExceptionHandler,7,107,0,0,1,22,1,7,1,7

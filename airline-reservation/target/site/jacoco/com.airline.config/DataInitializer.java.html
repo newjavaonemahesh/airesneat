@@ -4,96 +4,110 @@ import com.airline.model.*;
 import com.airline.repository.FlightRepository;
 import com.airline.repository.PassengerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
-<span class="fc" id="L16">@RequiredArgsConstructor</span>
+<span class="fc" id="L15">@RequiredArgsConstructor</span>
+<span class="fc" id="L16">@Slf4j</span>
 public class DataInitializer {
 
     @Bean
     public CommandLineRunner initData(FlightRepository flightRepository,
                                        PassengerRepository passengerRepository) {
 <span class="fc" id="L22">        return args -&gt; {</span>
+<span class="fc" id="L23">            log.info(&quot;Initializing sample data...&quot;);</span>
+
             // Create sample passengers
-<span class="fc" id="L24">            passengerRepository.save(Passenger.builder()</span>
-<span class="fc" id="L25">                    .name(&quot;John Doe&quot;)</span>
-<span class="fc" id="L26">                    .email(&quot;john@example.com&quot;)</span>
-<span class="fc" id="L27">                    .build());</span>
+<span class="fc" id="L26">            passengerRepository.save(Passenger.builder()</span>
+<span class="fc" id="L27">                    .name(&quot;John Doe&quot;)</span>
+<span class="fc" id="L28">                    .email(&quot;john@example.com&quot;)</span>
+<span class="fc" id="L29">                    .build());</span>
             
-<span class="fc" id="L29">            passengerRepository.save(Passenger.builder()</span>
-<span class="fc" id="L30">                    .name(&quot;Jane Smith&quot;)</span>
-<span class="fc" id="L31">                    .email(&quot;jane@example.com&quot;)</span>
-<span class="fc" id="L32">                    .build());</span>
+<span class="fc" id="L31">            passengerRepository.save(Passenger.builder()</span>
+<span class="fc" id="L32">                    .name(&quot;Jane Smith&quot;)</span>
+<span class="fc" id="L33">                    .email(&quot;jane@example.com&quot;)</span>
+<span class="fc" id="L34">                    .build());</span>
 
-<span class="fc" id="L34">            LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L36">            LocalDateTime now = LocalDateTime.now();</span>
 
-<span class="fc" id="L36">            Flight flight1 = createFlightWithSeats(&quot;AA100&quot;, &quot;JFK&quot;, &quot;LAX&quot;,</span>
-<span class="fc" id="L37">                    now.plusDays(1), now.plusDays(1).plusHours(6));</span>
-<span class="fc" id="L38">            flightRepository.save(flight1);</span>
+            // Flight 1: JFK -&gt; LAX
+<span class="fc" id="L39">            Flight flight1 = createFlightWithSeats(</span>
+                    &quot;AA100&quot;, &quot;JFK&quot;, &quot;LAX&quot;,
+<span class="fc" id="L41">                    now.plusDays(1).withHour(8).withMinute(0),</span>
+<span class="fc" id="L42">                    now.plusDays(1).withHour(11).withMinute(30)</span>
+            );
+<span class="fc" id="L44">            flightRepository.save(flight1);</span>
 
-<span class="fc" id="L40">            Flight flight2 = createFlightWithSeats(&quot;UA200&quot;, &quot;LAX&quot;, &quot;SFO&quot;,</span>
-<span class="fc" id="L41">                    now.plusDays(2), now.plusDays(2).plusHours(1).plusMinutes(30));</span>
-<span class="fc" id="L42">            flightRepository.save(flight2);</span>
+            // Flight 2: LAX -&gt; ORD
+<span class="fc" id="L47">            Flight flight2 = createFlightWithSeats(</span>
+                    &quot;UA200&quot;, &quot;LAX&quot;, &quot;ORD&quot;,
+<span class="fc" id="L49">                    now.plusDays(2).withHour(10).withMinute(0),</span>
+<span class="fc" id="L50">                    now.plusDays(2).withHour(16).withMinute(0)</span>
+            );
+<span class="fc" id="L52">            flightRepository.save(flight2);</span>
 
-<span class="fc" id="L44">            Flight flight3 = createFlightWithSeats(&quot;DL300&quot;, &quot;ORD&quot;, &quot;MIA&quot;,</span>
-<span class="fc" id="L45">                    now.plusDays(3), now.plusDays(3).plusHours(3));</span>
-<span class="fc" id="L46">            flightRepository.save(flight3);</span>
-<span class="fc" id="L47">        };</span>
+            // Flight 3: ORD -&gt; MIA
+<span class="fc" id="L55">            Flight flight3 = createFlightWithSeats(</span>
+                    &quot;DL300&quot;, &quot;ORD&quot;, &quot;MIA&quot;,
+<span class="fc" id="L57">                    now.plusDays(3).withHour(14).withMinute(0),</span>
+<span class="fc" id="L58">                    now.plusDays(3).withHour(18).withMinute(30)</span>
+            );
+<span class="fc" id="L60">            flightRepository.save(flight3);</span>
+
+<span class="fc" id="L62">            log.info(&quot;Sample data initialized: 3 flights with 30 seats each&quot;);</span>
+<span class="fc" id="L63">        };</span>
     }
 
-    private Flight createFlightWithSeats(String flightNumber, String departureAirport, String arrivalAirport,
-                                          LocalDateTime departure, LocalDateTime arrival) {
-<span class="fc" id="L52">        Flight flight = Flight.builder()</span>
-<span class="fc" id="L53">                .flightNumber(flightNumber)</span>
-<span class="fc" id="L54">                .departureAirport(departureAirport)</span>
-<span class="fc" id="L55">                .arrivalAirport(arrivalAirport)</span>
-<span class="fc" id="L56">                .departureTime(departure)</span>
-<span class="fc" id="L57">                .arrivalTime(arrival)</span>
-<span class="fc" id="L58">                .build();</span>
+    /**
+     * Creates a flight with 30 seats:
+     * - Rows 1-2: Business class (10 seats, 5 per row)
+     * - Rows 3-6: Economy class (20 seats, 5 per row)
+     */
+    private Flight createFlightWithSeats(String flightNumber, 
+                                          String departureAirport, 
+                                          String arrivalAirport,
+                                          LocalDateTime departureTime, 
+                                          LocalDateTime arrivalTime) {
+<span class="fc" id="L76">        Flight flight = Flight.builder()</span>
+<span class="fc" id="L77">                .flightNumber(flightNumber)</span>
+<span class="fc" id="L78">                .departureAirport(departureAirport)</span>
+<span class="fc" id="L79">                .arrivalAirport(arrivalAirport)</span>
+<span class="fc" id="L80">                .departureTime(departureTime)</span>
+<span class="fc" id="L81">                .arrivalTime(arrivalTime)</span>
+<span class="fc" id="L82">                .build();</span>
 
-        // First Class seats (Row 1)
-<span class="fc" id="L61">        List&lt;String&gt; firstClassCols = Arrays.asList(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;);</span>
-<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (String col : firstClassCols) {</span>
-<span class="fc" id="L63">            flight.addSeat(createSeat(&quot;1&quot; + col, 1, FareClass.FIRST));</span>
-<span class="fc" id="L64">        }</span>
-
-        // Business Class seats (Rows 2-3)
-<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (int row = 2; row &lt;= 3; row++) {</span>
-<span class="fc bfc" id="L68" title="All 2 branches covered.">            for (String col : Arrays.asList(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;)) {</span>
-<span class="fc" id="L69">                flight.addSeat(createSeat(row + col, row, FareClass.BUSINESS));</span>
-<span class="fc" id="L70">            }</span>
+        // Business class: Rows 1-2 (10 seats)
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        for (int row = 1; row &lt;= 2; row++) {</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            for (char col : new char[]{'A', 'B', 'C', 'D', 'E'}) {</span>
+<span class="fc" id="L87">                Seat seat = Seat.builder()</span>
+<span class="fc" id="L88">                        .seatNumber(row + String.valueOf(col))</span>
+<span class="fc" id="L89">                        .rowNumber(row)</span>
+<span class="fc" id="L90">                        .fareClass(FareClass.BUSINESS)</span>
+<span class="fc" id="L91">                        .status(SeatStatus.AVAILABLE)</span>
+<span class="fc" id="L92">                        .build();</span>
+<span class="fc" id="L93">                flight.addSeat(seat);</span>
+            }
         }
 
-        // Premium Economy seats (Rows 4-5)
-<span class="fc bfc" id="L74" title="All 2 branches covered.">        for (int row = 4; row &lt;= 5; row++) {</span>
-<span class="fc bfc" id="L75" title="All 2 branches covered.">            for (String col : Arrays.asList(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;)) {</span>
-<span class="fc" id="L76">                flight.addSeat(createSeat(row + col, row, FareClass.PREMIUM_ECONOMY));</span>
-<span class="fc" id="L77">            }</span>
+        // Economy class: Rows 3-6 (20 seats)
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        for (int row = 3; row &lt;= 6; row++) {</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            for (char col : new char[]{'A', 'B', 'C', 'D', 'E'}) {</span>
+<span class="fc" id="L100">                Seat seat = Seat.builder()</span>
+<span class="fc" id="L101">                        .seatNumber(row + String.valueOf(col))</span>
+<span class="fc" id="L102">                        .rowNumber(row)</span>
+<span class="fc" id="L103">                        .fareClass(FareClass.ECONOMY)</span>
+<span class="fc" id="L104">                        .status(SeatStatus.AVAILABLE)</span>
+<span class="fc" id="L105">                        .build();</span>
+<span class="fc" id="L106">                flight.addSeat(seat);</span>
+            }
         }
 
-        // Economy seats (Rows 6-10)
-<span class="fc bfc" id="L81" title="All 2 branches covered.">        for (int row = 6; row &lt;= 10; row++) {</span>
-<span class="fc bfc" id="L82" title="All 2 branches covered.">            for (String col : Arrays.asList(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;)) {</span>
-<span class="fc" id="L83">                flight.addSeat(createSeat(row + col, row, FareClass.ECONOMY));</span>
-<span class="fc" id="L84">            }</span>
-        }
-
-<span class="fc" id="L87">        return flight;</span>
-    }
-
-    private Seat createSeat(String seatNumber, int rowNumber, FareClass fareClass) {
-<span class="fc" id="L91">        return Seat.builder()</span>
-<span class="fc" id="L92">                .seatNumber(seatNumber)</span>
-<span class="fc" id="L93">                .rowNumber(rowNumber)</span>
-<span class="fc" id="L94">                .fareClass(fareClass)</span>
-<span class="fc" id="L95">                .status(SeatStatus.AVAILABLE)</span>
-<span class="fc" id="L96">                .build();</span>
+<span class="fc" id="L110">        return flight;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

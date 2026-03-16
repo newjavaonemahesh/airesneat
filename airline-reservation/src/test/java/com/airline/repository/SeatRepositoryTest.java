@@ -38,14 +38,14 @@ class SeatRepositoryTest {
         Seat seat1 = Seat.builder()
                 .seatNumber("1A")
                 .rowNumber(1)
-                .fareClass(FareClass.FIRST)
+                .fareClass(FareClass.BUSINESS)
                 .status(SeatStatus.AVAILABLE)
                 .build();
 
         Seat seat2 = Seat.builder()
                 .seatNumber("1B")
                 .rowNumber(1)
-                .fareClass(FareClass.FIRST)
+                .fareClass(FareClass.BUSINESS)
                 .status(SeatStatus.HELD)
                 .build();
 

@@ -50,7 +50,7 @@ class FlightControllerTest {
                 .id(1L)
                 .seatNumber("1A")
                 .rowNumber(1)
-                .fareClass(FareClass.FIRST)
+                .fareClass(FareClass.BUSINESS)
                 .status(SeatStatus.AVAILABLE)
                 .build();
     }
@@ -73,7 +73,7 @@ class FlightControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].seatNumber").value("1A"))
                 .andExpect(jsonPath("$[0].rowNumber").value(1))
-                .andExpect(jsonPath("$[0].fareClass").value("FIRST"))
+                .andExpect(jsonPath("$[0].fareClass").value("BUSINESS"))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
     }
 

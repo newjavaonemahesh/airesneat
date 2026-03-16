@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SeatController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Airline Seat Reservation System</a> &gt; <a href="index.source.html" class="el_package">com.airline.controller</a> &gt; <span class="el_source">SeatController.java</span></div><h1>SeatController.java</h1><pre class="source lang-java linenums">package com.airline.controller;
+
+import com.airline.dto.SeatHoldDTO;
+import com.airline.service.SeatHoldService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/seats&quot;)
+<span class="fc" id="L13">@RequiredArgsConstructor</span>
+@Tag(name = &quot;Seats&quot;, description = &quot;Seat hold operations&quot;)
+public class SeatController {
+
+    private final SeatHoldService seatHoldService;
+
+    @PostMapping(&quot;/{seatId}/hold&quot;)
+    @Operation(summary = &quot;Hold a seat&quot;, description = &quot;Places a temporary hold on a seat for 10 minutes&quot;)
+    public ResponseEntity&lt;SeatHoldDTO&gt; holdSeat(@PathVariable Long seatId) {
+<span class="fc" id="L22">        return ResponseEntity.ok(seatHoldService.holdSeat(seatId));</span>
+    }
+
+    @DeleteMapping(&quot;/hold/{holdToken}&quot;)
+    @Operation(summary = &quot;Release seat hold&quot;, description = &quot;Releases a held seat, making it available again&quot;)
+    public ResponseEntity&lt;Void&gt; releaseHold(@PathVariable String holdToken) {
+<span class="fc" id="L28">        seatHoldService.releaseHold(holdToken);</span>
+<span class="fc" id="L29">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

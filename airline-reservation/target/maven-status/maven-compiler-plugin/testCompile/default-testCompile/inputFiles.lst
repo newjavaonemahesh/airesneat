@@ -1,0 +1,8 @@
+/app/airline-reservation/src/test/java/com/airline/controller/BookingControllerTest.java
+/app/airline-reservation/src/test/java/com/airline/service/BookingServiceTest.java
+/app/airline-reservation/src/test/java/com/airline/controller/FlightControllerTest.java
+/app/airline-reservation/src/test/java/com/airline/AirlineReservationApplicationTests.java
+/app/airline-reservation/src/test/java/com/airline/service/FlightServiceTest.java
+/app/airline-reservation/src/test/java/com/airline/repository/SeatRepositoryTest.java
+/app/airline-reservation/src/test/java/com/airline/controller/SeatControllerTest.java
+/app/airline-reservation/src/test/java/com/airline/service/SeatHoldServiceTest.java

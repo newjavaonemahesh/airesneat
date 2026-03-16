@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FlightController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Airline Seat Reservation System</a> &gt; <a href="index.source.html" class="el_package">com.airline.controller</a> &gt; <span class="el_source">FlightController.java</span></div><h1>FlightController.java</h1><pre class="source lang-java linenums">package com.airline.controller;
+
+import com.airline.dto.FlightDTO;
+import com.airline.dto.FlightSearchRequest;
+import com.airline.dto.SeatDTO;
+import com.airline.service.FlightService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/flights&quot;)
+<span class="fc" id="L20">@RequiredArgsConstructor</span>
+@Tag(name = &quot;Flights&quot;, description = &quot;Flight search and seat viewing operations&quot;)
+public class FlightController {
+
+    private final FlightService flightService;
+
+    @GetMapping
+    @Operation(summary = &quot;Get all flights&quot;, description = &quot;Returns a list of all available flights&quot;)
+    public ResponseEntity&lt;List&lt;FlightDTO&gt;&gt; getAllFlights() {
+<span class="fc" id="L29">        return ResponseEntity.ok(flightService.getAllFlights());</span>
+    }
+
+    @GetMapping(&quot;/search&quot;)
+    @Operation(summary = &quot;Search flights&quot;, description = &quot;Search flights by origin, destination, and departure time range&quot;)
+    public ResponseEntity&lt;List&lt;FlightDTO&gt;&gt; searchFlights(
+            @Parameter(description = &quot;Origin airport code&quot;) @RequestParam(required = false) String origin,
+            @Parameter(description = &quot;Destination airport code&quot;) @RequestParam(required = false) String destination,
+            @Parameter(description = &quot;Departure time from&quot;) @RequestParam(required = false) 
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureFrom,
+            @Parameter(description = &quot;Departure time to&quot;) @RequestParam(required = false) 
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureTo) {
+        
+<span class="fc" id="L42">        FlightSearchRequest request = FlightSearchRequest.builder()</span>
+<span class="fc" id="L43">                .origin(origin)</span>
+<span class="fc" id="L44">                .destination(destination)</span>
+<span class="fc" id="L45">                .departureFrom(departureFrom)</span>
+<span class="fc" id="L46">                .departureTo(departureTo)</span>
+<span class="fc" id="L47">                .build();</span>
+        
+<span class="fc" id="L49">        return ResponseEntity.ok(flightService.searchFlights(request));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;Get flight by ID&quot;, description = &quot;Returns details of a specific flight&quot;)
+    public ResponseEntity&lt;FlightDTO&gt; getFlightById(@PathVariable Long id) {
+<span class="fc" id="L55">        return ResponseEntity.ok(flightService.getFlightById(id));</span>
+    }
+
+    @GetMapping(&quot;/{flightId}/seats&quot;)
+    @Operation(summary = &quot;Get all seats for a flight&quot;, description = &quot;Returns all seats for a specific flight with their status&quot;)
+    public ResponseEntity&lt;List&lt;SeatDTO&gt;&gt; getSeatsForFlight(@PathVariable Long flightId) {
+<span class="fc" id="L61">        return ResponseEntity.ok(flightService.getSeatsForFlight(flightId));</span>
+    }
+
+    @GetMapping(&quot;/{flightId}/seats/available&quot;)
+    @Operation(summary = &quot;Get available seats for a flight&quot;, description = &quot;Returns only available seats for a specific flight&quot;)
+    public ResponseEntity&lt;List&lt;SeatDTO&gt;&gt; getAvailableSeatsForFlight(@PathVariable Long flightId) {
+<span class="fc" id="L67">        return ResponseEntity.ok(flightService.getAvailableSeatsForFlight(flightId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

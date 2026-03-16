@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -47,17 +46,10 @@ class BookingServiceTest {
     private Booking testBooking;
     private SeatHold testHold;
     private Flight testFlight;
-    private FareClass testFareClass;
     private BookingRequest validRequest;
 
     @BeforeEach
     void setUp() {
-        testFareClass = FareClass.builder()
-                .id(1L)
-                .name("ECONOMY")
-                .basePrice(new BigDecimal("150.00"))
-                .build();
-
         testFlight = Flight.builder()
                 .id(1L)
                 .flightNumber("AA100")
@@ -66,136 +58,121 @@ class BookingServiceTest {
         testSeat = Seat.builder()
                 .id(1L)
                 .seatNumber("1A")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.HELD)
                 .flight(testFlight)
-                .fareClass(testFareClass)
                 .build();
 
         testPassenger = Passenger.builder()
                 .id(1L)
-                .firstName("John")
-                .lastName("Doe")
+                .name("John Doe")
                 .email("john@example.com")
                 .build();
 
         testBooking = Booking.builder()
                 .id(1L)
-                .bookingReference("BK12345678")
                 .seat(testSeat)
                 .passenger(testPassenger)
-                .totalFare(new BigDecimal("150.00"))
-                .bookedAt(LocalDateTime.now())
-                .cancelled(false)
+                .bookingTime(LocalDateTime.now())
+                .status(BookingStatus.CONFIRMED)
                 .build();
 
         testHold = SeatHold.builder()
                 .id(1L)
                 .seat(testSeat)
-                .holdToken("test-token-123")
-                .expiresAt(LocalDateTime.now().plusMinutes(10))
+                .userId("user123")
+                .expirationTime(LocalDateTime.now().plusMinutes(10))
                 .active(true)
                 .build();
 
         validRequest = BookingRequest.builder()
-                .holdToken("test-token-123")
-                .firstName("John")
-                .lastName("Doe")
+                .userId("user123")
+                .passengerName("John Doe")
                 .email("john@example.com")
-                .phoneNumber("1234567890")
                 .build();
     }
 
     @Test
     void confirmBooking_WhenValidHold_ShouldCreateBooking() {
-        when(seatHoldService.validateAndGetHold("test-token-123")).thenReturn(testHold);
+        when(seatHoldService.validateAndGetHold(1L, "user123")).thenReturn(testHold);
         when(passengerRepository.findByEmail("john@example.com")).thenReturn(Optional.empty());
         when(passengerRepository.save(any(Passenger.class))).thenReturn(testPassenger);
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
-            Booking b = invocation.getArgument(0);
-            b.setId(1L);
-            return b;
-        });
+        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        BookingDTO result = bookingService.confirmBooking(validRequest);
+        BookingDTO result = bookingService.confirmBooking(1L, validRequest);
 
-        assertThat(result.getBookingReference()).startsWith("BK");
         assertThat(result.getPassengerName()).isEqualTo("John Doe");
+        assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
         verify(seatHoldService).deactivateHold(testHold);
     }
 
     @Test
     void confirmBooking_WhenExistingPassenger_ShouldUseExistingPassenger() {
-        when(seatHoldService.validateAndGetHold("test-token-123")).thenReturn(testHold);
+        when(seatHoldService.validateAndGetHold(1L, "user123")).thenReturn(testHold);
         when(passengerRepository.findByEmail("john@example.com")).thenReturn(Optional.of(testPassenger));
         when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        bookingService.confirmBooking(validRequest);
+        bookingService.confirmBooking(1L, validRequest);
 
         verify(passengerRepository, never()).save(any(Passenger.class));
     }
 
     @Test
     void confirmBooking_WhenInvalidHold_ShouldThrowException() {
-        when(seatHoldService.validateAndGetHold("invalid-token"))
-                .thenThrow(new InvalidHoldException("Invalid hold token"));
+        when(seatHoldService.validateAndGetHold(1L, "user123"))
+                .thenThrow(new InvalidHoldException("No active hold found"));
 
-        validRequest.setHoldToken("invalid-token");
-
-        assertThatThrownBy(() -> bookingService.confirmBooking(validRequest))
+        assertThatThrownBy(() -> bookingService.confirmBooking(1L, validRequest))
                 .isInstanceOf(InvalidHoldException.class);
     }
 
     @Test
     void cancelBooking_WhenExists_ShouldCancelAndReleaseSeat() {
-        when(bookingRepository.findByBookingReference("BK12345678"))
-                .thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
         when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        BookingDTO result = bookingService.cancelBooking("BK12345678");
+        BookingDTO result = bookingService.cancelBooking(1L);
 
-        assertThat(testBooking.isCancelled()).isTrue();
+        assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
     }
 
     @Test
     void cancelBooking_WhenNotFound_ShouldThrowException() {
-        when(bookingRepository.findByBookingReference("INVALID"))
-                .thenReturn(Optional.empty());
+        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bookingService.cancelBooking("INVALID"))
+        assertThatThrownBy(() -> bookingService.cancelBooking(999L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void cancelBooking_WhenAlreadyCancelled_ShouldThrowException() {
-        testBooking.setCancelled(true);
-        when(bookingRepository.findByBookingReference("BK12345678"))
-                .thenReturn(Optional.of(testBooking));
+        testBooking.setStatus(BookingStatus.CANCELLED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
 
-        assertThatThrownBy(() -> bookingService.cancelBooking("BK12345678"))
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
                 .isInstanceOf(InvalidHoldException.class)
                 .hasMessageContaining("already cancelled");
     }
 
     @Test
-    void getBookingByReference_WhenExists_ShouldReturnBooking() {
-        when(bookingRepository.findByBookingReference("BK12345678"))
-                .thenReturn(Optional.of(testBooking));
+    void getBookingById_WhenExists_ShouldReturnBooking() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
 
-        BookingDTO result = bookingService.getBookingByReference("BK12345678");
+        BookingDTO result = bookingService.getBookingById(1L);
 
-        assertThat(result.getBookingReference()).isEqualTo("BK12345678");
+        assertThat(result.getPassengerName()).isEqualTo("John Doe");
     }
 
     @Test
-    void getBookingByReference_WhenNotFound_ShouldThrowException() {
-        when(bookingRepository.findByBookingReference("INVALID"))
-                .thenReturn(Optional.empty());
+    void getBookingById_WhenNotFound_ShouldThrowException() {
+        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bookingService.getBookingByReference("INVALID"))
+        assertThatThrownBy(() -> bookingService.getBookingById(999L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }

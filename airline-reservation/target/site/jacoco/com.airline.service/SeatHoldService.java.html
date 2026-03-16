@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SeatHoldService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Airline Seat Reservation System</a> &gt; <a href="index.source.html" class="el_package">com.airline.service</a> &gt; <span class="el_source">SeatHoldService.java</span></div><h1>SeatHoldService.java</h1><pre class="source lang-java linenums">package com.airline.service;
 
 import com.airline.dto.SeatHoldDTO;
+import com.airline.dto.SeatHoldRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.exception.SeatNotAvailableException;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 <span class="fc" id="L23">@RequiredArgsConstructor</span>
@@ -30,7 +30,7 @@ public class SeatHoldService {
     private int holdDurationMinutes;
 
     @Transactional
-    public SeatHoldDTO holdSeat(Long seatId) {
+    public SeatHoldDTO holdSeat(Long seatId, SeatHoldRequest request) {
 <span class="fc" id="L34">        Seat seat = seatRepository.findById(seatId)</span>
 <span class="fc" id="L35">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Seat not found with id: &quot; + seatId));</span>
 
@@ -40,47 +40,47 @@ public class SeatHoldService {
 
         // Create hold
 <span class="fc" id="L42">        LocalDateTime now = LocalDateTime.now();</span>
-<span class="fc" id="L43">        LocalDateTime expiresAt = now.plusMinutes(holdDurationMinutes);</span>
-<span class="fc" id="L44">        String holdToken = UUID.randomUUID().toString();</span>
+<span class="fc" id="L43">        LocalDateTime expirationTime = now.plusMinutes(holdDurationMinutes);</span>
 
-<span class="fc" id="L46">        SeatHold seatHold = SeatHold.builder()</span>
-<span class="fc" id="L47">                .seat(seat)</span>
-<span class="fc" id="L48">                .holdToken(holdToken)</span>
-<span class="fc" id="L49">                .createdAt(now)</span>
-<span class="fc" id="L50">                .expiresAt(expiresAt)</span>
-<span class="fc" id="L51">                .active(true)</span>
-<span class="fc" id="L52">                .build();</span>
+<span class="fc" id="L45">        SeatHold seatHold = SeatHold.builder()</span>
+<span class="fc" id="L46">                .seat(seat)</span>
+<span class="fc" id="L47">                .userId(request.getUserId())</span>
+<span class="fc" id="L48">                .holdTime(now)</span>
+<span class="fc" id="L49">                .expirationTime(expirationTime)</span>
+<span class="fc" id="L50">                .active(true)</span>
+<span class="fc" id="L51">                .build();</span>
 
-<span class="fc" id="L54">        seatHoldRepository.save(seatHold);</span>
+<span class="fc" id="L53">        seatHoldRepository.save(seatHold);</span>
 
         // Update seat status
-<span class="fc" id="L57">        seat.setStatus(SeatStatus.HELD);</span>
-<span class="fc" id="L58">        seatRepository.save(seat);</span>
+<span class="fc" id="L56">        seat.setStatus(SeatStatus.HELD);</span>
+<span class="fc" id="L57">        seatRepository.save(seat);</span>
 
-<span class="fc" id="L60">        return SeatHoldDTO.builder()</span>
-<span class="fc" id="L61">                .holdId(seatHold.getId())</span>
-<span class="fc" id="L62">                .seatId(seat.getId())</span>
-<span class="fc" id="L63">                .seatNumber(seat.getSeatNumber())</span>
-<span class="fc" id="L64">                .holdToken(holdToken)</span>
-<span class="fc" id="L65">                .expiresAt(expiresAt.toString())</span>
+<span class="fc" id="L59">        return SeatHoldDTO.builder()</span>
+<span class="fc" id="L60">                .holdId(seatHold.getId())</span>
+<span class="fc" id="L61">                .seatId(seat.getId())</span>
+<span class="fc" id="L62">                .seatNumber(seat.getSeatNumber())</span>
+<span class="fc" id="L63">                .userId(request.getUserId())</span>
+<span class="fc" id="L64">                .holdTime(now)</span>
+<span class="fc" id="L65">                .expirationTime(expirationTime)</span>
 <span class="fc" id="L66">                .message(&quot;Seat held successfully. Complete booking within &quot; + holdDurationMinutes + &quot; minutes.&quot;)</span>
 <span class="fc" id="L67">                .build();</span>
     }
 
     @Transactional
-    public void releaseHold(String holdToken) {
-<span class="fc" id="L72">        SeatHold seatHold = seatHoldRepository.findByHoldTokenAndActiveTrue(holdToken)</span>
-<span class="fc" id="L73">                .orElseThrow(() -&gt; new InvalidHoldException(&quot;Invalid or expired hold token&quot;));</span>
+    public void releaseHold(Long seatId, String userId) {
+<span class="fc" id="L72">        SeatHold seatHold = seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(seatId, userId)</span>
+<span class="fc" id="L73">                .orElseThrow(() -&gt; new InvalidHoldException(&quot;No active hold found for this seat and user&quot;));</span>
 
 <span class="fc" id="L75">        releaseHoldInternal(seatHold);</span>
 <span class="fc" id="L76">    }</span>
 
     @Transactional
-    public SeatHold validateAndGetHold(String holdToken) {
-<span class="fc" id="L80">        SeatHold seatHold = seatHoldRepository.findByHoldTokenAndActiveTrue(holdToken)</span>
-<span class="pc" id="L81">                .orElseThrow(() -&gt; new InvalidHoldException(&quot;Invalid or expired hold token&quot;));</span>
+    public SeatHold validateAndGetHold(Long seatId, String userId) {
+<span class="fc" id="L80">        SeatHold seatHold = seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(seatId, userId)</span>
+<span class="pc" id="L81">                .orElseThrow(() -&gt; new InvalidHoldException(&quot;No active hold found for this seat and user&quot;));</span>
 
-<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (seatHold.getExpiresAt().isBefore(LocalDateTime.now())) {</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (seatHold.getExpirationTime().isBefore(LocalDateTime.now())) {</span>
 <span class="fc" id="L84">            releaseHoldInternal(seatHold);</span>
 <span class="fc" id="L85">            throw new InvalidHoldException(&quot;Hold has expired. Please hold the seat again.&quot;);</span>
         }

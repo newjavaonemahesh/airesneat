@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,31 +24,26 @@ public class BookingService {
     private final SeatHoldService seatHoldService;
 
     @Transactional
-    public BookingDTO confirmBooking(BookingRequest request) {
+    public BookingDTO confirmBooking(Long seatId, BookingRequest request) {
         // Validate hold
-        SeatHold seatHold = seatHoldService.validateAndGetHold(request.getHoldToken());
+        SeatHold seatHold = seatHoldService.validateAndGetHold(seatId, request.getUserId());
         Seat seat = seatHold.getSeat();
 
         // Create or get passenger
         Passenger passenger = passengerRepository.findByEmail(request.getEmail())
                 .orElseGet(() -> passengerRepository.save(
                         Passenger.builder()
-                                .firstName(request.getFirstName())
-                                .lastName(request.getLastName())
+                                .name(request.getPassengerName())
                                 .email(request.getEmail())
-                                .phoneNumber(request.getPhoneNumber())
                                 .build()
                 ));
 
         // Create booking
-        String bookingReference = generateBookingReference();
         Booking booking = Booking.builder()
-                .bookingReference(bookingReference)
                 .seat(seat)
                 .passenger(passenger)
-                .totalFare(seat.getFareClass().getBasePrice())
-                .bookedAt(LocalDateTime.now())
-                .cancelled(false)
+                .bookingTime(LocalDateTime.now())
+                .status(BookingStatus.CONFIRMED)
                 .build();
 
         bookingRepository.save(booking);
@@ -65,17 +59,16 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingDTO cancelBooking(String bookingReference) {
-        Booking booking = bookingRepository.findByBookingReference(bookingReference)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with reference: " + bookingReference));
+    public BookingDTO cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        if (booking.isCancelled()) {
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new InvalidHoldException("Booking is already cancelled");
         }
 
-        // Update booking
-        booking.setCancelled(true);
-        booking.setCancelledAt(LocalDateTime.now());
+        // Update booking status
+        booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
         // Release seat
@@ -87,14 +80,10 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingDTO getBookingByReference(String bookingReference) {
-        Booking booking = bookingRepository.findByBookingReference(bookingReference)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with reference: " + bookingReference));
+    public BookingDTO getBookingById(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
         return toBookingDTO(booking);
-    }
-
-    private String generateBookingReference() {
-        return "BK" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private BookingDTO toBookingDTO(Booking booking) {
@@ -103,14 +92,12 @@ public class BookingService {
         
         return BookingDTO.builder()
                 .id(booking.getId())
-                .bookingReference(booking.getBookingReference())
+                .passengerName(passenger.getName())
+                .passengerEmail(passenger.getEmail())
                 .seatNumber(seat.getSeatNumber())
                 .flightNumber(seat.getFlight().getFlightNumber())
-                .passengerName(passenger.getFirstName() + " " + passenger.getLastName())
-                .passengerEmail(passenger.getEmail())
-                .totalFare(booking.getTotalFare())
-                .bookedAt(booking.getBookedAt())
-                .cancelled(booking.isCancelled())
+                .bookingTime(booking.getBookingTime())
+                .status(booking.getStatus())
                 .build();
     }
 }

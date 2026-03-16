@@ -1,6 +1,7 @@
 package com.airline.service;
 
 import com.airline.dto.SeatHoldDTO;
+import com.airline.dto.SeatHoldRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.exception.SeatNotAvailableException;
@@ -15,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
@@ -40,17 +40,11 @@ class SeatHoldServiceTest {
     private Seat testSeat;
     private SeatHold testHold;
     private Flight testFlight;
-    private FareClass testFareClass;
+    private SeatHoldRequest holdRequest;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(seatHoldService, "holdDurationMinutes", 10);
-
-        testFareClass = FareClass.builder()
-                .id(1L)
-                .name("ECONOMY")
-                .basePrice(new BigDecimal("150.00"))
-                .build();
 
         testFlight = Flight.builder()
                 .id(1L)
@@ -60,18 +54,23 @@ class SeatHoldServiceTest {
         testSeat = Seat.builder()
                 .id(1L)
                 .seatNumber("1A")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.AVAILABLE)
                 .flight(testFlight)
-                .fareClass(testFareClass)
                 .build();
 
         testHold = SeatHold.builder()
                 .id(1L)
                 .seat(testSeat)
-                .holdToken("test-token-123")
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(10))
+                .userId("user123")
+                .holdTime(LocalDateTime.now())
+                .expirationTime(LocalDateTime.now().plusMinutes(10))
                 .active(true)
+                .build();
+
+        holdRequest = SeatHoldRequest.builder()
+                .userId("user123")
                 .build();
     }
 
@@ -81,10 +80,10 @@ class SeatHoldServiceTest {
         when(seatHoldRepository.save(any(SeatHold.class))).thenReturn(testHold);
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        SeatHoldDTO result = seatHoldService.holdSeat(1L);
+        SeatHoldDTO result = seatHoldService.holdSeat(1L, holdRequest);
 
         assertThat(result.getSeatNumber()).isEqualTo("1A");
-        assertThat(result.getHoldToken()).isNotNull();
+        assertThat(result.getUserId()).isEqualTo("user123");
         verify(seatRepository).save(testSeat);
     }
 
@@ -92,7 +91,7 @@ class SeatHoldServiceTest {
     void holdSeat_WhenSeatNotFound_ShouldThrowException() {
         when(seatRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> seatHoldService.holdSeat(999L))
+        assertThatThrownBy(() -> seatHoldService.holdSeat(999L, holdRequest))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Seat not found");
     }
@@ -102,53 +101,53 @@ class SeatHoldServiceTest {
         testSeat.setStatus(SeatStatus.HELD);
         when(seatRepository.findById(1L)).thenReturn(Optional.of(testSeat));
 
-        assertThatThrownBy(() -> seatHoldService.holdSeat(1L))
+        assertThatThrownBy(() -> seatHoldService.holdSeat(1L, holdRequest))
                 .isInstanceOf(SeatNotAvailableException.class);
     }
 
     @Test
-    void releaseHold_WhenValidToken_ShouldReleaseHold() {
+    void releaseHold_WhenValidHold_ShouldReleaseHold() {
         testSeat.setStatus(SeatStatus.HELD);
-        when(seatHoldRepository.findByHoldTokenAndActiveTrue("test-token-123"))
+        when(seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(1L, "user123"))
                 .thenReturn(Optional.of(testHold));
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
         when(seatHoldRepository.save(any(SeatHold.class))).thenReturn(testHold);
 
-        seatHoldService.releaseHold("test-token-123");
+        seatHoldService.releaseHold(1L, "user123");
 
         assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
         verify(seatRepository).save(testSeat);
     }
 
     @Test
-    void releaseHold_WhenInvalidToken_ShouldThrowException() {
-        when(seatHoldRepository.findByHoldTokenAndActiveTrue("invalid-token"))
+    void releaseHold_WhenInvalidHold_ShouldThrowException() {
+        when(seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(1L, "invalidUser"))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> seatHoldService.releaseHold("invalid-token"))
+        assertThatThrownBy(() -> seatHoldService.releaseHold(1L, "invalidUser"))
                 .isInstanceOf(InvalidHoldException.class);
     }
 
     @Test
     void validateAndGetHold_WhenValid_ShouldReturnHold() {
-        when(seatHoldRepository.findByHoldTokenAndActiveTrue("test-token-123"))
+        when(seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(1L, "user123"))
                 .thenReturn(Optional.of(testHold));
 
-        SeatHold result = seatHoldService.validateAndGetHold("test-token-123");
+        SeatHold result = seatHoldService.validateAndGetHold(1L, "user123");
 
-        assertThat(result.getHoldToken()).isEqualTo("test-token-123");
+        assertThat(result.getUserId()).isEqualTo("user123");
     }
 
     @Test
     void validateAndGetHold_WhenExpired_ShouldThrowException() {
-        testHold.setExpiresAt(LocalDateTime.now().minusMinutes(5));
+        testHold.setExpirationTime(LocalDateTime.now().minusMinutes(5));
         testSeat.setStatus(SeatStatus.HELD);
-        when(seatHoldRepository.findByHoldTokenAndActiveTrue("test-token-123"))
+        when(seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(1L, "user123"))
                 .thenReturn(Optional.of(testHold));
         when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
         when(seatHoldRepository.save(any(SeatHold.class))).thenReturn(testHold);
 
-        assertThatThrownBy(() -> seatHoldService.validateAndGetHold("test-token-123"))
+        assertThatThrownBy(() -> seatHoldService.validateAndGetHold(1L, "user123"))
                 .isInstanceOf(InvalidHoldException.class)
                 .hasMessageContaining("expired");
     }

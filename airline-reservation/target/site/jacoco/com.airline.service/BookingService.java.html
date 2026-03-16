@@ -13,10 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
-<span class="fc" id="L19">@RequiredArgsConstructor</span>
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -25,93 +24,81 @@ public class BookingService {
     private final SeatHoldService seatHoldService;
 
     @Transactional
-    public BookingDTO confirmBooking(BookingRequest request) {
+    public BookingDTO confirmBooking(Long seatId, BookingRequest request) {
         // Validate hold
-<span class="fc" id="L30">        SeatHold seatHold = seatHoldService.validateAndGetHold(request.getHoldToken());</span>
-<span class="fc" id="L31">        Seat seat = seatHold.getSeat();</span>
+<span class="fc" id="L29">        SeatHold seatHold = seatHoldService.validateAndGetHold(seatId, request.getUserId());</span>
+<span class="fc" id="L30">        Seat seat = seatHold.getSeat();</span>
 
         // Create or get passenger
-<span class="fc" id="L34">        Passenger passenger = passengerRepository.findByEmail(request.getEmail())</span>
-<span class="fc" id="L35">                .orElseGet(() -&gt; passengerRepository.save(</span>
-<span class="fc" id="L36">                        Passenger.builder()</span>
-<span class="fc" id="L37">                                .firstName(request.getFirstName())</span>
-<span class="fc" id="L38">                                .lastName(request.getLastName())</span>
-<span class="fc" id="L39">                                .email(request.getEmail())</span>
-<span class="fc" id="L40">                                .phoneNumber(request.getPhoneNumber())</span>
-<span class="fc" id="L41">                                .build()</span>
+<span class="fc" id="L33">        Passenger passenger = passengerRepository.findByEmail(request.getEmail())</span>
+<span class="fc" id="L34">                .orElseGet(() -&gt; passengerRepository.save(</span>
+<span class="fc" id="L35">                        Passenger.builder()</span>
+<span class="fc" id="L36">                                .name(request.getPassengerName())</span>
+<span class="fc" id="L37">                                .email(request.getEmail())</span>
+<span class="fc" id="L38">                                .build()</span>
                 ));
 
         // Create booking
-<span class="fc" id="L45">        String bookingReference = generateBookingReference();</span>
-<span class="fc" id="L46">        Booking booking = Booking.builder()</span>
-<span class="fc" id="L47">                .bookingReference(bookingReference)</span>
-<span class="fc" id="L48">                .seat(seat)</span>
-<span class="fc" id="L49">                .passenger(passenger)</span>
-<span class="fc" id="L50">                .totalFare(seat.getFareClass().getBasePrice())</span>
-<span class="fc" id="L51">                .bookedAt(LocalDateTime.now())</span>
-<span class="fc" id="L52">                .cancelled(false)</span>
-<span class="fc" id="L53">                .build();</span>
+<span class="fc" id="L42">        Booking booking = Booking.builder()</span>
+<span class="fc" id="L43">                .seat(seat)</span>
+<span class="fc" id="L44">                .passenger(passenger)</span>
+<span class="fc" id="L45">                .bookingTime(LocalDateTime.now())</span>
+<span class="fc" id="L46">                .status(BookingStatus.CONFIRMED)</span>
+<span class="fc" id="L47">                .build();</span>
 
-<span class="fc" id="L55">        bookingRepository.save(booking);</span>
+<span class="fc" id="L49">        bookingRepository.save(booking);</span>
 
         // Update seat status to BOOKED
-<span class="fc" id="L58">        seat.setStatus(SeatStatus.BOOKED);</span>
-<span class="fc" id="L59">        seatRepository.save(seat);</span>
+<span class="fc" id="L52">        seat.setStatus(SeatStatus.BOOKED);</span>
+<span class="fc" id="L53">        seatRepository.save(seat);</span>
 
         // Deactivate the hold
-<span class="fc" id="L62">        seatHoldService.deactivateHold(seatHold);</span>
+<span class="fc" id="L56">        seatHoldService.deactivateHold(seatHold);</span>
 
-<span class="fc" id="L64">        return toBookingDTO(booking);</span>
+<span class="fc" id="L58">        return toBookingDTO(booking);</span>
     }
 
     @Transactional
-    public BookingDTO cancelBooking(String bookingReference) {
-<span class="fc" id="L69">        Booking booking = bookingRepository.findByBookingReference(bookingReference)</span>
-<span class="fc" id="L70">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with reference: &quot; + bookingReference));</span>
+    public BookingDTO cancelBooking(Long bookingId) {
+<span class="fc" id="L63">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="fc" id="L64">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
 
-<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (booking.isCancelled()) {</span>
-<span class="fc" id="L73">            throw new InvalidHoldException(&quot;Booking is already cancelled&quot;);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (booking.getStatus() == BookingStatus.CANCELLED) {</span>
+<span class="fc" id="L67">            throw new InvalidHoldException(&quot;Booking is already cancelled&quot;);</span>
         }
 
-        // Update booking
-<span class="fc" id="L77">        booking.setCancelled(true);</span>
-<span class="fc" id="L78">        booking.setCancelledAt(LocalDateTime.now());</span>
-<span class="fc" id="L79">        bookingRepository.save(booking);</span>
+        // Update booking status
+<span class="fc" id="L71">        booking.setStatus(BookingStatus.CANCELLED);</span>
+<span class="fc" id="L72">        bookingRepository.save(booking);</span>
 
         // Release seat
-<span class="fc" id="L82">        Seat seat = booking.getSeat();</span>
-<span class="fc" id="L83">        seat.setStatus(SeatStatus.AVAILABLE);</span>
-<span class="fc" id="L84">        seatRepository.save(seat);</span>
+<span class="fc" id="L75">        Seat seat = booking.getSeat();</span>
+<span class="fc" id="L76">        seat.setStatus(SeatStatus.AVAILABLE);</span>
+<span class="fc" id="L77">        seatRepository.save(seat);</span>
 
-<span class="fc" id="L86">        return toBookingDTO(booking);</span>
+<span class="fc" id="L79">        return toBookingDTO(booking);</span>
     }
 
     @Transactional(readOnly = true)
-    public BookingDTO getBookingByReference(String bookingReference) {
-<span class="fc" id="L91">        Booking booking = bookingRepository.findByBookingReference(bookingReference)</span>
-<span class="fc" id="L92">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with reference: &quot; + bookingReference));</span>
-<span class="fc" id="L93">        return toBookingDTO(booking);</span>
-    }
-
-    private String generateBookingReference() {
-<span class="fc" id="L97">        return &quot;BK&quot; + UUID.randomUUID().toString().substring(0, 8).toUpperCase();</span>
+    public BookingDTO getBookingById(Long bookingId) {
+<span class="fc" id="L84">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="fc" id="L85">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking not found with id: &quot; + bookingId));</span>
+<span class="fc" id="L86">        return toBookingDTO(booking);</span>
     }
 
     private BookingDTO toBookingDTO(Booking booking) {
-<span class="fc" id="L101">        Seat seat = booking.getSeat();</span>
-<span class="fc" id="L102">        Passenger passenger = booking.getPassenger();</span>
+<span class="fc" id="L90">        Seat seat = booking.getSeat();</span>
+<span class="fc" id="L91">        Passenger passenger = booking.getPassenger();</span>
         
-<span class="fc" id="L104">        return BookingDTO.builder()</span>
-<span class="fc" id="L105">                .id(booking.getId())</span>
-<span class="fc" id="L106">                .bookingReference(booking.getBookingReference())</span>
-<span class="fc" id="L107">                .seatNumber(seat.getSeatNumber())</span>
-<span class="fc" id="L108">                .flightNumber(seat.getFlight().getFlightNumber())</span>
-<span class="fc" id="L109">                .passengerName(passenger.getFirstName() + &quot; &quot; + passenger.getLastName())</span>
-<span class="fc" id="L110">                .passengerEmail(passenger.getEmail())</span>
-<span class="fc" id="L111">                .totalFare(booking.getTotalFare())</span>
-<span class="fc" id="L112">                .bookedAt(booking.getBookedAt())</span>
-<span class="fc" id="L113">                .cancelled(booking.isCancelled())</span>
-<span class="fc" id="L114">                .build();</span>
+<span class="fc" id="L93">        return BookingDTO.builder()</span>
+<span class="fc" id="L94">                .id(booking.getId())</span>
+<span class="fc" id="L95">                .passengerName(passenger.getName())</span>
+<span class="fc" id="L96">                .passengerEmail(passenger.getEmail())</span>
+<span class="fc" id="L97">                .seatNumber(seat.getSeatNumber())</span>
+<span class="fc" id="L98">                .flightNumber(seat.getFlight().getFlightNumber())</span>
+<span class="fc" id="L99">                .bookingTime(booking.getBookingTime())</span>
+<span class="fc" id="L100">                .status(booking.getStatus())</span>
+<span class="fc" id="L101">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

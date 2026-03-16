@@ -30,18 +30,18 @@ public class FlightController {
     }
 
     @GetMapping(&quot;/search&quot;)
-    @Operation(summary = &quot;Search flights&quot;, description = &quot;Search flights by origin, destination, and departure time range&quot;)
+    @Operation(summary = &quot;Search flights&quot;, description = &quot;Search flights by departure/arrival airport and departure time range&quot;)
     public ResponseEntity&lt;List&lt;FlightDTO&gt;&gt; searchFlights(
-            @Parameter(description = &quot;Origin airport code&quot;) @RequestParam(required = false) String origin,
-            @Parameter(description = &quot;Destination airport code&quot;) @RequestParam(required = false) String destination,
+            @Parameter(description = &quot;Departure airport code&quot;) @RequestParam(required = false) String departureAirport,
+            @Parameter(description = &quot;Arrival airport code&quot;) @RequestParam(required = false) String arrivalAirport,
             @Parameter(description = &quot;Departure time from&quot;) @RequestParam(required = false) 
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureFrom,
             @Parameter(description = &quot;Departure time to&quot;) @RequestParam(required = false) 
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureTo) {
         
 <span class="fc" id="L42">        FlightSearchRequest request = FlightSearchRequest.builder()</span>
-<span class="fc" id="L43">                .origin(origin)</span>
-<span class="fc" id="L44">                .destination(destination)</span>
+<span class="fc" id="L43">                .departureAirport(departureAirport)</span>
+<span class="fc" id="L44">                .arrivalAirport(arrivalAirport)</span>
 <span class="fc" id="L45">                .departureFrom(departureFrom)</span>
 <span class="fc" id="L46">                .departureTo(departureTo)</span>
 <span class="fc" id="L47">                .build();</span>

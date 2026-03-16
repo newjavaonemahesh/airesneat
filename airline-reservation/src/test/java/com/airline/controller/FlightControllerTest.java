@@ -4,6 +4,7 @@ import com.airline.dto.FlightDTO;
 import com.airline.dto.FlightSearchRequest;
 import com.airline.dto.SeatDTO;
 import com.airline.exception.ResourceNotFoundException;
+import com.airline.model.FareClass;
 import com.airline.model.SeatStatus;
 import com.airline.service.FlightService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,14 +14,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,8 +41,8 @@ class FlightControllerTest {
         testFlight = FlightDTO.builder()
                 .id(1L)
                 .flightNumber("AA100")
-                .origin("JFK")
-                .destination("LAX")
+                .departureAirport("JFK")
+                .arrivalAirport("LAX")
                 .departureTime(LocalDateTime.of(2024, 1, 15, 10, 0))
                 .arrivalTime(LocalDateTime.of(2024, 1, 15, 16, 0))
                 .totalSeats(50)
@@ -54,9 +52,9 @@ class FlightControllerTest {
         testSeat = SeatDTO.builder()
                 .id(1L)
                 .seatNumber("1A")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.AVAILABLE)
-                .fareClassName("ECONOMY")
-                .price(new BigDecimal("150.00"))
                 .build();
     }
 
@@ -67,7 +65,7 @@ class FlightControllerTest {
         mockMvc.perform(get("/api/flights"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].flightNumber").value("AA100"))
-                .andExpect(jsonPath("$[0].origin").value("JFK"));
+                .andExpect(jsonPath("$[0].departureAirport").value("JFK"));
     }
 
     @Test
@@ -76,8 +74,8 @@ class FlightControllerTest {
                 .thenReturn(Arrays.asList(testFlight));
 
         mockMvc.perform(get("/api/flights/search")
-                        .param("origin", "JFK")
-                        .param("destination", "LAX"))
+                        .param("departureAirport", "JFK")
+                        .param("arrivalAirport", "LAX"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].flightNumber").value("AA100"));
     }
@@ -106,7 +104,8 @@ class FlightControllerTest {
 
         mockMvc.perform(get("/api/flights/1/seats"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].seatNumber").value("1A"));
+                .andExpect(jsonPath("$[0].seatNumber").value("1A"))
+                .andExpect(jsonPath("$[0].rowNumber").value(1));
     }
 
     @Test

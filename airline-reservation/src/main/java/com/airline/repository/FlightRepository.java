@@ -16,13 +16,13 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
     Optional<Flight> findByFlightNumber(String flightNumber);
 
     @Query("SELECT f FROM Flight f WHERE " +
-           "(:origin IS NULL OR f.origin = :origin) AND " +
-           "(:destination IS NULL OR f.destination = :destination) AND " +
+           "(:departureAirport IS NULL OR f.departureAirport = :departureAirport) AND " +
+           "(:arrivalAirport IS NULL OR f.arrivalAirport = :arrivalAirport) AND " +
            "(:departureFrom IS NULL OR f.departureTime >= :departureFrom) AND " +
            "(:departureTo IS NULL OR f.departureTime <= :departureTo)")
     List<Flight> searchFlights(
-            @Param("origin") String origin,
-            @Param("destination") String destination,
+            @Param("departureAirport") String departureAirport,
+            @Param("arrivalAirport") String arrivalAirport,
             @Param("departureFrom") LocalDateTime departureFrom,
             @Param("departureTo") LocalDateTime departureTo);
 }

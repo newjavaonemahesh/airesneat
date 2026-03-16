@@ -23,13 +23,13 @@ public class SeatHold {
     private Seat seat;
 
     @Column(nullable = false)
-    private String holdToken;
+    private String userId;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime holdTime;
 
     @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    private LocalDateTime expirationTime;
 
     @Column(nullable = false)
     @Builder.Default

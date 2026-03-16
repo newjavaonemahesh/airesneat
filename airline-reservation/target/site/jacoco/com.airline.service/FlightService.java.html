@@ -26,8 +26,8 @@ public class FlightService {
 
     public List&lt;FlightDTO&gt; searchFlights(FlightSearchRequest request) {
 <span class="fc" id="L28">        List&lt;Flight&gt; flights = flightRepository.searchFlights(</span>
-<span class="fc" id="L29">                request.getOrigin(),</span>
-<span class="fc" id="L30">                request.getDestination(),</span>
+<span class="fc" id="L29">                request.getDepartureAirport(),</span>
+<span class="fc" id="L30">                request.getArrivalAirport(),</span>
 <span class="fc" id="L31">                request.getDepartureFrom(),</span>
 <span class="fc" id="L32">                request.getDepartureTo()</span>
         );
@@ -77,8 +77,8 @@ public class FlightService {
 <span class="fc" id="L77">        return FlightDTO.builder()</span>
 <span class="fc" id="L78">                .id(flight.getId())</span>
 <span class="fc" id="L79">                .flightNumber(flight.getFlightNumber())</span>
-<span class="fc" id="L80">                .origin(flight.getOrigin())</span>
-<span class="fc" id="L81">                .destination(flight.getDestination())</span>
+<span class="fc" id="L80">                .departureAirport(flight.getDepartureAirport())</span>
+<span class="fc" id="L81">                .arrivalAirport(flight.getArrivalAirport())</span>
 <span class="fc" id="L82">                .departureTime(flight.getDepartureTime())</span>
 <span class="fc" id="L83">                .arrivalTime(flight.getArrivalTime())</span>
 <span class="fc" id="L84">                .totalSeats(totalSeats)</span>
@@ -90,9 +90,9 @@ public class FlightService {
 <span class="fc" id="L90">        return SeatDTO.builder()</span>
 <span class="fc" id="L91">                .id(seat.getId())</span>
 <span class="fc" id="L92">                .seatNumber(seat.getSeatNumber())</span>
-<span class="fc" id="L93">                .status(seat.getStatus())</span>
-<span class="fc" id="L94">                .fareClassName(seat.getFareClass().getName())</span>
-<span class="fc" id="L95">                .price(seat.getFareClass().getBasePrice())</span>
+<span class="fc" id="L93">                .rowNumber(seat.getRowNumber())</span>
+<span class="fc" id="L94">                .fareClass(seat.getFareClass())</span>
+<span class="fc" id="L95">                .status(seat.getStatus())</span>
 <span class="fc" id="L96">                .build();</span>
     }
 }

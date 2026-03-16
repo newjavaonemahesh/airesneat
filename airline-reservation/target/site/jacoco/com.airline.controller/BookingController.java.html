@@ -19,22 +19,24 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping
-    @Operation(summary = &quot;Confirm booking&quot;, description = &quot;Confirms a booking using a valid hold token&quot;)
-    public ResponseEntity&lt;BookingDTO&gt; confirmBooking(@Valid @RequestBody BookingRequest request) {
-<span class="fc" id="L25">        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.confirmBooking(request));</span>
+    @PostMapping(&quot;/seats/{seatId}&quot;)
+    @Operation(summary = &quot;Confirm booking&quot;, description = &quot;Confirms a booking for a held seat&quot;)
+    public ResponseEntity&lt;BookingDTO&gt; confirmBooking(
+            @PathVariable Long seatId,
+            @Valid @RequestBody BookingRequest request) {
+<span class="fc" id="L27">        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.confirmBooking(seatId, request));</span>
     }
 
-    @GetMapping(&quot;/{bookingReference}&quot;)
-    @Operation(summary = &quot;Get booking details&quot;, description = &quot;Returns booking details by booking reference&quot;)
-    public ResponseEntity&lt;BookingDTO&gt; getBooking(@PathVariable String bookingReference) {
-<span class="fc" id="L31">        return ResponseEntity.ok(bookingService.getBookingByReference(bookingReference));</span>
+    @GetMapping(&quot;/{bookingId}&quot;)
+    @Operation(summary = &quot;Get booking details&quot;, description = &quot;Returns booking details by booking ID&quot;)
+    public ResponseEntity&lt;BookingDTO&gt; getBooking(@PathVariable Long bookingId) {
+<span class="fc" id="L33">        return ResponseEntity.ok(bookingService.getBookingById(bookingId));</span>
     }
 
-    @DeleteMapping(&quot;/{bookingReference}&quot;)
+    @DeleteMapping(&quot;/{bookingId}&quot;)
     @Operation(summary = &quot;Cancel booking&quot;, description = &quot;Cancels a booking and releases the seat&quot;)
-    public ResponseEntity&lt;BookingDTO&gt; cancelBooking(@PathVariable String bookingReference) {
-<span class="fc" id="L37">        return ResponseEntity.ok(bookingService.cancelBooking(bookingReference));</span>
+    public ResponseEntity&lt;BookingDTO&gt; cancelBooking(@PathVariable Long bookingId) {
+<span class="fc" id="L39">        return ResponseEntity.ok(bookingService.cancelBooking(bookingId));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

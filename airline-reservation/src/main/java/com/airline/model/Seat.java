@@ -19,6 +19,13 @@ public class Seat {
     @Column(nullable = false)
     private String seatNumber;
 
+    @Column(nullable = false)
+    private Integer rowNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FareClass fareClass;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -27,8 +34,4 @@ public class Seat {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "flight_id", nullable = false)
     private Flight flight;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fare_class_id", nullable = false)
-    private FareClass fareClass;
 }

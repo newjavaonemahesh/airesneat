@@ -17,13 +17,8 @@ public class Passenger {
     private Long id;
 
     @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
+    private String name;
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    private String phoneNumber;
 }

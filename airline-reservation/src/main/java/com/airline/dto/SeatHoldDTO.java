@@ -2,6 +2,8 @@ package com.airline.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -11,7 +13,8 @@ public class SeatHoldDTO {
     private Long holdId;
     private Long seatId;
     private String seatNumber;
-    private String holdToken;
-    private String expiresAt;
+    private String userId;
+    private LocalDateTime holdTime;
+    private LocalDateTime expirationTime;
     private String message;
 }

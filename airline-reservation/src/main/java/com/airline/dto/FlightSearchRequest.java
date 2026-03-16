@@ -3,7 +3,6 @@ package com.airline.dto;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -11,8 +10,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class FlightSearchRequest {
-    private String origin;
-    private String destination;
+    private String departureAirport;
+    private String arrivalAirport;
     private LocalDateTime departureFrom;
     private LocalDateTime departureTo;
 }

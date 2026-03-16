@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -39,21 +38,14 @@ class FlightServiceTest {
 
     private Flight testFlight;
     private Seat testSeat;
-    private FareClass testFareClass;
 
     @BeforeEach
     void setUp() {
-        testFareClass = FareClass.builder()
-                .id(1L)
-                .name("ECONOMY")
-                .basePrice(new BigDecimal("150.00"))
-                .build();
-
         testFlight = Flight.builder()
                 .id(1L)
                 .flightNumber("AA100")
-                .origin("JFK")
-                .destination("LAX")
+                .departureAirport("JFK")
+                .arrivalAirport("LAX")
                 .departureTime(LocalDateTime.of(2024, 1, 15, 10, 0))
                 .arrivalTime(LocalDateTime.of(2024, 1, 15, 16, 0))
                 .build();
@@ -61,9 +53,10 @@ class FlightServiceTest {
         testSeat = Seat.builder()
                 .id(1L)
                 .seatNumber("1A")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.AVAILABLE)
                 .flight(testFlight)
-                .fareClass(testFareClass)
                 .build();
 
         testFlight.getSeats().add(testSeat);
@@ -83,8 +76,8 @@ class FlightServiceTest {
     @Test
     void searchFlights_ShouldReturnMatchingFlights() {
         FlightSearchRequest request = FlightSearchRequest.builder()
-                .origin("JFK")
-                .destination("LAX")
+                .departureAirport("JFK")
+                .arrivalAirport("LAX")
                 .build();
 
         when(flightRepository.searchFlights(anyString(), anyString(), any(), any()))
@@ -94,7 +87,7 @@ class FlightServiceTest {
         List<FlightDTO> result = flightService.searchFlights(request);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getOrigin()).isEqualTo("JFK");
+        assertThat(result.get(0).getDepartureAirport()).isEqualTo("JFK");
     }
 
     @Test
@@ -125,6 +118,7 @@ class FlightServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getSeatNumber()).isEqualTo("1A");
+        assertThat(result.get(0).getRowNumber()).isEqualTo(1);
     }
 
     @Test

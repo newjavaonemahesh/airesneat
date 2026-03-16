@@ -19,17 +19,20 @@ public class Seat {
     @Column(nullable = false)
 <span class="fc" id="L20">    private String seatNumber;</span>
 
+    @Column(nullable = false)
+<span class="fc" id="L23">    private Integer rowNumber;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+<span class="fc" id="L27">    private FareClass fareClass;</span>
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-<span class="fc" id="L25">    private SeatStatus status = SeatStatus.AVAILABLE;</span>
+<span class="fc" id="L32">    private SeatStatus status = SeatStatus.AVAILABLE;</span>
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = &quot;flight_id&quot;, nullable = false)
-<span class="fc" id="L29">    private Flight flight;</span>
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = &quot;fare_class_id&quot;, nullable = false)
-<span class="fc" id="L33">    private FareClass fareClass;</span>
+<span class="fc" id="L36">    private Flight flight;</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

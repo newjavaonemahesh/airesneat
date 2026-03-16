@@ -24,10 +24,10 @@ public class Flight {
     private String flightNumber;
 
     @Column(nullable = false)
-    private String origin;
+    private String departureAirport;
 
     @Column(nullable = false)
-    private String destination;
+    private String arrivalAirport;
 
     @Column(nullable = false)
     private LocalDateTime departureTime;
@@ -42,5 +42,10 @@ public class Flight {
     public void addSeat(Seat seat) {
         seats.add(seat);
         seat.setFlight(this);
+    }
+
+    public void removeSeat(Seat seat) {
+        seats.remove(seat);
+        seat.setFlight(null);
     }
 }

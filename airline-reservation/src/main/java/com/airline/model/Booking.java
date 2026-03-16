@@ -3,7 +3,6 @@ package com.airline.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,26 +18,19 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String bookingReference;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "passenger_id", nullable = false)
+    private Passenger passenger;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seat_id", nullable = false, unique = true)
     private Seat seat;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "passenger_id", nullable = false)
-    private Passenger passenger;
-
     @Column(nullable = false)
-    private BigDecimal totalFare;
+    private LocalDateTime bookingTime;
 
-    @Column(nullable = false)
-    private LocalDateTime bookedAt;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private boolean cancelled = false;
-
-    private LocalDateTime cancelledAt;
+    private BookingStatus status = BookingStatus.CONFIRMED;
 }

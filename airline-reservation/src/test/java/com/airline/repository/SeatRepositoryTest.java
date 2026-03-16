@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,37 +23,30 @@ class SeatRepositoryTest {
     @Autowired
     private FlightRepository flightRepository;
 
-    @Autowired
-    private FareClassRepository fareClassRepository;
-
     private Flight testFlight;
-    private FareClass testFareClass;
 
     @BeforeEach
     void setUp() {
-        testFareClass = fareClassRepository.save(FareClass.builder()
-                .name("ECONOMY")
-                .basePrice(new BigDecimal("150.00"))
-                .build());
-
         testFlight = Flight.builder()
                 .flightNumber("TEST100")
-                .origin("JFK")
-                .destination("LAX")
+                .departureAirport("JFK")
+                .arrivalAirport("LAX")
                 .departureTime(LocalDateTime.now().plusDays(1))
                 .arrivalTime(LocalDateTime.now().plusDays(1).plusHours(5))
                 .build();
 
         Seat seat1 = Seat.builder()
                 .seatNumber("1A")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.AVAILABLE)
-                .fareClass(testFareClass)
                 .build();
 
         Seat seat2 = Seat.builder()
                 .seatNumber("1B")
+                .rowNumber(1)
+                .fareClass(FareClass.FIRST)
                 .status(SeatStatus.HELD)
-                .fareClass(testFareClass)
                 .build();
 
         testFlight.addSeat(seat1);

@@ -1,6 +1,7 @@
 package com.airline.service;
 
 import com.airline.dto.SeatHoldDTO;
+import com.airline.dto.SeatHoldRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
 import com.airline.exception.SeatNotAvailableException;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class SeatHoldService {
     private int holdDurationMinutes;
 
     @Transactional
-    public SeatHoldDTO holdSeat(Long seatId) {
+    public SeatHoldDTO holdSeat(Long seatId, SeatHoldRequest request) {
         Seat seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> new ResourceNotFoundException("Seat not found with id: " + seatId));
 
@@ -40,14 +40,13 @@ public class SeatHoldService {
 
         // Create hold
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusMinutes(holdDurationMinutes);
-        String holdToken = UUID.randomUUID().toString();
+        LocalDateTime expirationTime = now.plusMinutes(holdDurationMinutes);
 
         SeatHold seatHold = SeatHold.builder()
                 .seat(seat)
-                .holdToken(holdToken)
-                .createdAt(now)
-                .expiresAt(expiresAt)
+                .userId(request.getUserId())
+                .holdTime(now)
+                .expirationTime(expirationTime)
                 .active(true)
                 .build();
 
@@ -61,26 +60,27 @@ public class SeatHoldService {
                 .holdId(seatHold.getId())
                 .seatId(seat.getId())
                 .seatNumber(seat.getSeatNumber())
-                .holdToken(holdToken)
-                .expiresAt(expiresAt.toString())
+                .userId(request.getUserId())
+                .holdTime(now)
+                .expirationTime(expirationTime)
                 .message("Seat held successfully. Complete booking within " + holdDurationMinutes + " minutes.")
                 .build();
     }
 
     @Transactional
-    public void releaseHold(String holdToken) {
-        SeatHold seatHold = seatHoldRepository.findByHoldTokenAndActiveTrue(holdToken)
-                .orElseThrow(() -> new InvalidHoldException("Invalid or expired hold token"));
+    public void releaseHold(Long seatId, String userId) {
+        SeatHold seatHold = seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(seatId, userId)
+                .orElseThrow(() -> new InvalidHoldException("No active hold found for this seat and user"));
 
         releaseHoldInternal(seatHold);
     }
 
     @Transactional
-    public SeatHold validateAndGetHold(String holdToken) {
-        SeatHold seatHold = seatHoldRepository.findByHoldTokenAndActiveTrue(holdToken)
-                .orElseThrow(() -> new InvalidHoldException("Invalid or expired hold token"));
+    public SeatHold validateAndGetHold(Long seatId, String userId) {
+        SeatHold seatHold = seatHoldRepository.findBySeatIdAndUserIdAndActiveTrue(seatId, userId)
+                .orElseThrow(() -> new InvalidHoldException("No active hold found for this seat and user"));
 
-        if (seatHold.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (seatHold.getExpirationTime().isBefore(LocalDateTime.now())) {
             releaseHoldInternal(seatHold);
             throw new InvalidHoldException("Hold has expired. Please hold the seat again.");
         }

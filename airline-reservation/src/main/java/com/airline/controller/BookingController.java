@@ -19,21 +19,23 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping
-    @Operation(summary = "Confirm booking", description = "Confirms a booking using a valid hold token")
-    public ResponseEntity<BookingDTO> confirmBooking(@Valid @RequestBody BookingRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.confirmBooking(request));
+    @PostMapping("/seats/{seatId}")
+    @Operation(summary = "Confirm booking", description = "Confirms a booking for a held seat")
+    public ResponseEntity<BookingDTO> confirmBooking(
+            @PathVariable Long seatId,
+            @Valid @RequestBody BookingRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.confirmBooking(seatId, request));
     }
 
-    @GetMapping("/{bookingReference}")
-    @Operation(summary = "Get booking details", description = "Returns booking details by booking reference")
-    public ResponseEntity<BookingDTO> getBooking(@PathVariable String bookingReference) {
-        return ResponseEntity.ok(bookingService.getBookingByReference(bookingReference));
+    @GetMapping("/{bookingId}")
+    @Operation(summary = "Get booking details", description = "Returns booking details by booking ID")
+    public ResponseEntity<BookingDTO> getBooking(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(bookingService.getBookingById(bookingId));
     }
 
-    @DeleteMapping("/{bookingReference}")
+    @DeleteMapping("/{bookingId}")
     @Operation(summary = "Cancel booking", description = "Cancels a booking and releases the seat")
-    public ResponseEntity<BookingDTO> cancelBooking(@PathVariable String bookingReference) {
-        return ResponseEntity.ok(bookingService.cancelBooking(bookingReference));
+    public ResponseEntity<BookingDTO> cancelBooking(@PathVariable Long bookingId) {
+        return ResponseEntity.ok(bookingService.cancelBooking(bookingId));
     }
 }

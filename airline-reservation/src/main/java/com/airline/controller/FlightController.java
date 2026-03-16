@@ -30,18 +30,18 @@ public class FlightController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search flights", description = "Search flights by origin, destination, and departure time range")
+    @Operation(summary = "Search flights", description = "Search flights by departure/arrival airport and departure time range")
     public ResponseEntity<List<FlightDTO>> searchFlights(
-            @Parameter(description = "Origin airport code") @RequestParam(required = false) String origin,
-            @Parameter(description = "Destination airport code") @RequestParam(required = false) String destination,
+            @Parameter(description = "Departure airport code") @RequestParam(required = false) String departureAirport,
+            @Parameter(description = "Arrival airport code") @RequestParam(required = false) String arrivalAirport,
             @Parameter(description = "Departure time from") @RequestParam(required = false) 
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureFrom,
             @Parameter(description = "Departure time to") @RequestParam(required = false) 
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime departureTo) {
         
         FlightSearchRequest request = FlightSearchRequest.builder()
-                .origin(origin)
-                .destination(destination)
+                .departureAirport(departureAirport)
+                .arrivalAirport(arrivalAirport)
                 .departureFrom(departureFrom)
                 .departureTo(departureTo)
                 .build();

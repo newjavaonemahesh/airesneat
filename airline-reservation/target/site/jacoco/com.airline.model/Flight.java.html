@@ -24,10 +24,10 @@ public class Flight {
 <span class="fc" id="L24">    private String flightNumber;</span>
 
     @Column(nullable = false)
-<span class="fc" id="L27">    private String origin;</span>
+<span class="fc" id="L27">    private String departureAirport;</span>
 
     @Column(nullable = false)
-<span class="fc" id="L30">    private String destination;</span>
+<span class="fc" id="L30">    private String arrivalAirport;</span>
 
     @Column(nullable = false)
 <span class="fc" id="L33">    private LocalDateTime departureTime;</span>
@@ -43,5 +43,10 @@ public class Flight {
 <span class="fc" id="L43">        seats.add(seat);</span>
 <span class="fc" id="L44">        seat.setFlight(this);</span>
 <span class="fc" id="L45">    }</span>
+
+    public void removeSeat(Seat seat) {
+<span class="nc" id="L48">        seats.remove(seat);</span>
+<span class="nc" id="L49">        seat.setFlight(null);</span>
+<span class="nc" id="L50">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

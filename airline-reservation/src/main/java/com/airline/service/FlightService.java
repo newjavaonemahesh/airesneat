@@ -26,8 +26,8 @@ public class FlightService {
 
     public List<FlightDTO> searchFlights(FlightSearchRequest request) {
         List<Flight> flights = flightRepository.searchFlights(
-                request.getOrigin(),
-                request.getDestination(),
+                request.getDepartureAirport(),
+                request.getArrivalAirport(),
                 request.getDepartureFrom(),
                 request.getDepartureTo()
         );
@@ -77,8 +77,8 @@ public class FlightService {
         return FlightDTO.builder()
                 .id(flight.getId())
                 .flightNumber(flight.getFlightNumber())
-                .origin(flight.getOrigin())
-                .destination(flight.getDestination())
+                .departureAirport(flight.getDepartureAirport())
+                .arrivalAirport(flight.getArrivalAirport())
                 .departureTime(flight.getDepartureTime())
                 .arrivalTime(flight.getArrivalTime())
                 .totalSeats(totalSeats)
@@ -90,9 +90,9 @@ public class FlightService {
         return SeatDTO.builder()
                 .id(seat.getId())
                 .seatNumber(seat.getSeatNumber())
+                .rowNumber(seat.getRowNumber())
+                .fareClass(seat.getFareClass())
                 .status(seat.getStatus())
-                .fareClassName(seat.getFareClass().getName())
-                .price(seat.getFareClass().getBasePrice())
                 .build();
     }
 }

@@ -4,6 +4,7 @@ import com.airline.dto.BookingDTO;
 import com.airline.dto.BookingRequest;
 import com.airline.exception.InvalidHoldException;
 import com.airline.exception.ResourceNotFoundException;
+import com.airline.model.BookingStatus;
 import com.airline.service.BookingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +15,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,43 +43,39 @@ class BookingControllerTest {
     void setUp() {
         testBooking = BookingDTO.builder()
                 .id(1L)
-                .bookingReference("BK12345678")
                 .seatNumber("1A")
                 .flightNumber("AA100")
                 .passengerName("John Doe")
                 .passengerEmail("john@example.com")
-                .totalFare(new BigDecimal("150.00"))
-                .bookedAt(LocalDateTime.now())
-                .cancelled(false)
+                .bookingTime(LocalDateTime.now())
+                .status(BookingStatus.CONFIRMED)
                 .build();
 
         validRequest = BookingRequest.builder()
-                .holdToken("test-token-123")
-                .firstName("John")
-                .lastName("Doe")
+                .userId("user123")
+                .passengerName("John Doe")
                 .email("john@example.com")
-                .phoneNumber("1234567890")
                 .build();
     }
 
     @Test
     void confirmBooking_ShouldReturnCreatedBooking() throws Exception {
-        when(bookingService.confirmBooking(any(BookingRequest.class))).thenReturn(testBooking);
+        when(bookingService.confirmBooking(eq(1L), any(BookingRequest.class))).thenReturn(testBooking);
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/bookings/seats/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.bookingReference").value("BK12345678"))
-                .andExpect(jsonPath("$.passengerName").value("John Doe"));
+                .andExpect(jsonPath("$.passengerName").value("John Doe"))
+                .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
 
     @Test
     void confirmBooking_WithInvalidHold_ShouldReturn400() throws Exception {
-        when(bookingService.confirmBooking(any(BookingRequest.class)))
-                .thenThrow(new InvalidHoldException("Invalid hold token"));
+        when(bookingService.confirmBooking(eq(1L), any(BookingRequest.class)))
+                .thenThrow(new InvalidHoldException("No active hold found"));
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/bookings/seats/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -87,13 +84,12 @@ class BookingControllerTest {
     @Test
     void confirmBooking_WithInvalidRequest_ShouldReturn400() throws Exception {
         BookingRequest invalidRequest = BookingRequest.builder()
-                .holdToken("")  // Empty token
-                .firstName("John")
-                .lastName("Doe")
+                .userId("")  // Empty userId
+                .passengerName("John")
                 .email("invalid-email")  // Invalid email
                 .build();
 
-        mockMvc.perform(post("/api/bookings")
+        mockMvc.perform(post("/api/bookings/seats/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -101,19 +97,19 @@ class BookingControllerTest {
 
     @Test
     void getBooking_ShouldReturnBookingDetails() throws Exception {
-        when(bookingService.getBookingByReference("BK12345678")).thenReturn(testBooking);
+        when(bookingService.getBookingById(1L)).thenReturn(testBooking);
 
-        mockMvc.perform(get("/api/bookings/BK12345678"))
+        mockMvc.perform(get("/api/bookings/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.bookingReference").value("BK12345678"));
+                .andExpect(jsonPath("$.passengerName").value("John Doe"));
     }
 
     @Test
     void getBooking_WhenNotFound_ShouldReturn404() throws Exception {
-        when(bookingService.getBookingByReference("INVALID"))
+        when(bookingService.getBookingById(999L))
                 .thenThrow(new ResourceNotFoundException("Booking not found"));
 
-        mockMvc.perform(get("/api/bookings/INVALID"))
+        mockMvc.perform(get("/api/bookings/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -121,13 +117,12 @@ class BookingControllerTest {
     void cancelBooking_ShouldReturnCancelledBooking() throws Exception {
         BookingDTO cancelledBooking = BookingDTO.builder()
                 .id(1L)
-                .bookingReference("BK12345678")
-                .cancelled(true)
+                .status(BookingStatus.CANCELLED)
                 .build();
-        when(bookingService.cancelBooking("BK12345678")).thenReturn(cancelledBooking);
+        when(bookingService.cancelBooking(1L)).thenReturn(cancelledBooking);
 
-        mockMvc.perform(delete("/api/bookings/BK12345678"))
+        mockMvc.perform(delete("/api/bookings/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.cancelled").value(true));
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
 }

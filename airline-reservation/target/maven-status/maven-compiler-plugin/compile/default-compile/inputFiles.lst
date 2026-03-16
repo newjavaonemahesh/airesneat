@@ -1,7 +1,6 @@
 /app/airline-reservation/src/main/java/com/airline/service/BookingService.java
 /app/airline-reservation/src/main/java/com/airline/model/Flight.java
 /app/airline-reservation/src/main/java/com/airline/service/SeatHoldService.java
-/app/airline-reservation/src/main/java/com/airline/repository/FareClassRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/PassengerRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/SeatRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/SeatHoldRepository.java
@@ -11,6 +10,7 @@
 /app/airline-reservation/src/main/java/com/airline/repository/FlightRepository.java
 /app/airline-reservation/src/main/java/com/airline/repository/BookingRepository.java
 /app/airline-reservation/src/main/java/com/airline/dto/BookingDTO.java
+/app/airline-reservation/src/main/java/com/airline/dto/SeatHoldRequest.java
 /app/airline-reservation/src/main/java/com/airline/dto/SeatDTO.java
 /app/airline-reservation/src/main/java/com/airline/dto/FlightSearchRequest.java
 /app/airline-reservation/src/main/java/com/airline/exception/InvalidHoldException.java
@@ -26,6 +26,7 @@
 /app/airline-reservation/src/main/java/com/airline/AirlineReservationApplication.java
 /app/airline-reservation/src/main/java/com/airline/dto/FlightDTO.java
 /app/airline-reservation/src/main/java/com/airline/service/FlightService.java
+/app/airline-reservation/src/main/java/com/airline/model/BookingStatus.java
 /app/airline-reservation/src/main/java/com/airline/model/FareClass.java
 /app/airline-reservation/src/main/java/com/airline/model/SeatHold.java
 /app/airline-reservation/src/main/java/com/airline/model/SeatStatus.java

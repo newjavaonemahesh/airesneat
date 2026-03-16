@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.airline.service.BookingServiceTest" time="0.573" tests="0" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.airline.service.SeatLockServiceTest$ReleaseHoldTests" time="0.005" tests="2" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -59,4 +59,9 @@
     <property name="java.class.version" value="61.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[airline-reservation] "/>
   </properties>
+  <testcase name="releaseHold_WhenHoldNotActive_ShouldThrowException" classname="com.airline.service.SeatLockServiceTest$ReleaseHoldTests" time="0.002"/>
+  <testcase name="releaseHold_WhenValidHold_ShouldReleaseSuccessfully" classname="com.airline.service.SeatLockServiceTest$ReleaseHoldTests" time="0.002">
+    <system-out><![CDATA[2026-03-16T02:06:14.171Z  INFO 5663 --- [airline-reservation] [           main] com.airline.service.SeatLockService      : Hold 1 released for seat 1A
+]]></system-out>
+  </testcase>
 </testsuite>

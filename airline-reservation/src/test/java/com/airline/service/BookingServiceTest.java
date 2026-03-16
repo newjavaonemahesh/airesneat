@@ -8,6 +8,8 @@ import com.airline.repository.BookingRepository;
 import com.airline.repository.PassengerRepository;
 import com.airline.repository.SeatRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("BookingService Tests")
 class BookingServiceTest {
 
     @Mock
@@ -80,99 +83,170 @@ class BookingServiceTest {
                 .id(1L)
                 .seat(testSeat)
                 .userId("user123")
+                .holdTime(LocalDateTime.now())
                 .expirationTime(LocalDateTime.now().plusMinutes(10))
                 .active(true)
                 .build();
     }
 
-    @Test
-    void createBooking_WhenValidHold_ShouldCreateBooking() {
-        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
-        when(passengerRepository.findById(1L)).thenReturn(Optional.of(testPassenger));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-        when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
+    @Nested
+    @DisplayName("createBooking tests")
+    class CreateBookingTests {
 
-        BookingDTO result = bookingService.createBooking(1L, 1L);
+        @Test
+        @DisplayName("createBooking success - should create booking and update seat status")
+        void createBooking_WhenValidHold_ShouldCreateBookingSuccessfully() {
+            // Arrange
+            when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+            when(passengerRepository.findById(1L)).thenReturn(Optional.of(testPassenger));
+            when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
+            when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
 
-        assertThat(result.getPassengerName()).isEqualTo("John Doe");
-        assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.BOOKED);
-        verify(seatLockService).deactivateHold(testHold);
+            // Act
+            BookingDTO result = bookingService.createBooking(1L, 1L);
+
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getPassengerName()).isEqualTo("John Doe");
+            assertThat(result.getSeatNumber()).isEqualTo("1A");
+            assertThat(result.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+            assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.BOOKED);
+            
+            verify(seatLockService).deactivateHold(testHold);
+            verify(bookingRepository).save(any(Booking.class));
+        }
+
+        @Test
+        @DisplayName("booking fails if hold expired - should throw InvalidHoldException")
+        void createBooking_WhenHoldExpired_ShouldThrowException() {
+            // Arrange
+            when(seatLockService.getActiveHold(1L))
+                    .thenThrow(new InvalidHoldException("Hold has expired. Please hold the seat again."));
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
+                    .isInstanceOf(InvalidHoldException.class)
+                    .hasMessageContaining("expired");
+
+            verify(bookingRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("booking fails if hold not active")
+        void createBooking_WhenHoldNotActive_ShouldThrowException() {
+            // Arrange
+            when(seatLockService.getActiveHold(1L))
+                    .thenThrow(new InvalidHoldException("Hold is no longer active"));
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
+                    .isInstanceOf(InvalidHoldException.class)
+                    .hasMessageContaining("no longer active");
+        }
+
+        @Test
+        @DisplayName("booking fails if seat no longer held")
+        void createBooking_WhenSeatNotHeld_ShouldThrowException() {
+            // Arrange
+            testSeat.setStatus(SeatStatus.AVAILABLE);
+            when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
+                    .isInstanceOf(InvalidHoldException.class)
+                    .hasMessageContaining("no longer held");
+        }
+
+        @Test
+        @DisplayName("booking fails if passenger not found")
+        void createBooking_WhenPassengerNotFound_ShouldThrowException() {
+            // Arrange
+            when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+            when(passengerRepository.findById(999L)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.createBooking(1L, 999L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Passenger not found");
+        }
     }
 
-    @Test
-    void createBooking_WhenSeatNotHeld_ShouldThrowException() {
-        testSeat.setStatus(SeatStatus.AVAILABLE);
-        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
+    @Nested
+    @DisplayName("cancelBooking tests")
+    class CancelBookingTests {
 
-        assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
-                .isInstanceOf(InvalidHoldException.class)
-                .hasMessageContaining("no longer held");
+        @Test
+        @DisplayName("cancelBooking success - should cancel and release seat")
+        void cancelBooking_WhenExists_ShouldCancelSuccessfully() {
+            // Arrange
+            when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+            when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
+            when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
+
+            // Act
+            BookingDTO result = bookingService.cancelBooking(1L);
+
+            // Assert
+            assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+            assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+            verify(bookingRepository).save(testBooking);
+            verify(seatRepository).save(testSeat);
+        }
+
+        @Test
+        @DisplayName("cancelBooking fails if booking not found")
+        void cancelBooking_WhenNotFound_ShouldThrowException() {
+            // Arrange
+            when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.cancelBooking(999L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Booking not found");
+        }
+
+        @Test
+        @DisplayName("cancelBooking fails if already cancelled")
+        void cancelBooking_WhenAlreadyCancelled_ShouldThrowException() {
+            // Arrange
+            testBooking.setStatus(BookingStatus.CANCELLED);
+            when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
+
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.cancelBooking(1L))
+                    .isInstanceOf(InvalidHoldException.class)
+                    .hasMessageContaining("already cancelled");
+        }
     }
 
-    @Test
-    void createBooking_WhenHoldInvalid_ShouldThrowException() {
-        when(seatLockService.getActiveHold(1L))
-                .thenThrow(new InvalidHoldException("Hold is not active"));
+    @Nested
+    @DisplayName("getBookingById tests")
+    class GetBookingByIdTests {
 
-        assertThatThrownBy(() -> bookingService.createBooking(1L, 1L))
-                .isInstanceOf(InvalidHoldException.class);
-    }
+        @Test
+        @DisplayName("getBookingById success")
+        void getBookingById_WhenExists_ShouldReturnBooking() {
+            // Arrange
+            when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
 
-    @Test
-    void createBooking_WhenPassengerNotFound_ShouldThrowException() {
-        when(seatLockService.getActiveHold(1L)).thenReturn(testHold);
-        when(passengerRepository.findById(999L)).thenReturn(Optional.empty());
+            // Act
+            BookingDTO result = bookingService.getBookingById(1L);
 
-        assertThatThrownBy(() -> bookingService.createBooking(1L, 999L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Passenger not found");
-    }
+            // Assert
+            assertThat(result).isNotNull();
+            assertThat(result.getPassengerName()).isEqualTo("John Doe");
+            assertThat(result.getFlightNumber()).isEqualTo("AA100");
+        }
 
-    @Test
-    void cancelBooking_WhenExists_ShouldCancelAndReleaseSeat() {
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(testBooking);
-        when(seatRepository.save(any(Seat.class))).thenReturn(testSeat);
+        @Test
+        @DisplayName("getBookingById fails if not found")
+        void getBookingById_WhenNotFound_ShouldThrowException() {
+            // Arrange
+            when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
 
-        BookingDTO result = bookingService.cancelBooking(1L);
-
-        assertThat(testBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        assertThat(testSeat.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
-    }
-
-    @Test
-    void cancelBooking_WhenNotFound_ShouldThrowException() {
-        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> bookingService.cancelBooking(999L))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void cancelBooking_WhenAlreadyCancelled_ShouldThrowException() {
-        testBooking.setStatus(BookingStatus.CANCELLED);
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
-
-        assertThatThrownBy(() -> bookingService.cancelBooking(1L))
-                .isInstanceOf(InvalidHoldException.class)
-                .hasMessageContaining("already cancelled");
-    }
-
-    @Test
-    void getBookingById_WhenExists_ShouldReturnBooking() {
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(testBooking));
-
-        BookingDTO result = bookingService.getBookingById(1L);
-
-        assertThat(result.getPassengerName()).isEqualTo("John Doe");
-    }
-
-    @Test
-    void getBookingById_WhenNotFound_ShouldThrowException() {
-        when(bookingRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> bookingService.getBookingById(999L))
-                .isInstanceOf(ResourceNotFoundException.class);
+            // Act & Assert
+            assertThatThrownBy(() -> bookingService.getBookingById(999L))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
     }
 }

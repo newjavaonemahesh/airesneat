@@ -94,7 +94,7 @@ public class SeatLockService {
     @Transactional
     public void releaseHold(Long holdId) {
 <span class="fc" id="L96">        SeatHold seatHold = seatHoldRepository.findById(holdId)</span>
-<span class="fc" id="L97">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Hold not found with id: &quot; + holdId));</span>
+<span class="pc" id="L97">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Hold not found with id: &quot; + holdId));</span>
 
 <span class="fc bfc" id="L99" title="All 2 branches covered.">        if (!seatHold.isActive()) {</span>
 <span class="fc" id="L100">            throw new InvalidHoldException(&quot;Hold is no longer active&quot;);</span>
@@ -151,9 +151,9 @@ public class SeatLockService {
      */
     @Transactional
     public void deactivateHold(SeatHold seatHold) {
-<span class="fc" id="L154">        seatHold.setActive(false);</span>
-<span class="fc" id="L155">        seatHoldRepository.save(seatHold);</span>
-<span class="fc" id="L156">    }</span>
+<span class="nc" id="L154">        seatHold.setActive(false);</span>
+<span class="nc" id="L155">        seatHoldRepository.save(seatHold);</span>
+<span class="nc" id="L156">    }</span>
 
     private void releaseHoldInternal(SeatHold seatHold) {
 <span class="fc" id="L159">        Seat seat = seatHold.getSeat();</span>

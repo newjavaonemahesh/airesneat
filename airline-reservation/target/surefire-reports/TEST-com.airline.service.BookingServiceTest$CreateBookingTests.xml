@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.airline.service.BookingServiceTest" time="0.573" tests="0" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.046" tests="5" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -59,4 +59,12 @@
     <property name="java.class.version" value="61.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[airline-reservation] "/>
   </properties>
+  <testcase name="createBooking_WhenHoldExpired_ShouldThrowException" classname="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.007"/>
+  <testcase name="createBooking_WhenValidHold_ShouldCreateBookingSuccessfully" classname="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.007">
+    <system-out><![CDATA[2026-03-16T02:06:13.880Z  INFO 5663 --- [airline-reservation] [           main] com.airline.service.BookingService       : Booking created: seat 1A for passenger John Doe
+]]></system-out>
+  </testcase>
+  <testcase name="createBooking_WhenPassengerNotFound_ShouldThrowException" classname="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.009"/>
+  <testcase name="createBooking_WhenSeatNotHeld_ShouldThrowException" classname="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.01"/>
+  <testcase name="createBooking_WhenHoldNotActive_ShouldThrowException" classname="com.airline.service.BookingServiceTest$CreateBookingTests" time="0.006"/>
 </testsuite>

@@ -22,8 +22,8 @@ public class Booking {
     @JoinColumn(name = "passenger_id", nullable = false)
     private Passenger passenger;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seat_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
     @Column(nullable = false)
